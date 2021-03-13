@@ -8,7 +8,7 @@ import ru.gadjini.telegram.smart.bot.commons.exception.botapi.TelegramApiRequest
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.service.flood.DownloadFloodWaitController;
-import ru.gadjini.telegram.smart.bot.commons.service.telegram.TelegramBotApiService;
+import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
 
 import java.net.SocketException;
 import java.util.Objects;
@@ -18,12 +18,12 @@ public class FileDownloader {
 
     public static final String FILE_ID_TEMPORARILY_UNAVAILABLE = "Bad Request: wrong file_id or the file is temporarily unavailable";
 
-    private TelegramBotApiService telegramLocalBotApiService;
+    private CancelableTelegramBotApiMediaService telegramLocalBotApiService;
 
     private DownloadFloodWaitController floodWaitController;
 
     @Autowired
-    public FileDownloader(TelegramBotApiService telegramLocalBotApiService, DownloadFloodWaitController floodWaitController) {
+    public FileDownloader(CancelableTelegramBotApiMediaService telegramLocalBotApiService, DownloadFloodWaitController floodWaitController) {
         this.telegramLocalBotApiService = telegramLocalBotApiService;
         this.floodWaitController = floodWaitController;
     }

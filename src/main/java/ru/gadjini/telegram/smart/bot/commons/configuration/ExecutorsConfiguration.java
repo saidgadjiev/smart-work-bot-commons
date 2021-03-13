@@ -12,6 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import ru.gadjini.telegram.smart.bot.commons.job.DownloadJob;
 import ru.gadjini.telegram.smart.bot.commons.job.UploadJob;
 import ru.gadjini.telegram.smart.bot.commons.job.WorkQueueJob;
+import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
@@ -52,6 +53,12 @@ public class ExecutorsConfiguration {
 
     @Value("${upload.light.threads:2}")
     private int uploadLightThreads;
+
+    @Autowired
+    public ExecutorsConfiguration(ServerProperties serverProperties) {
+        LOGGER.debug("Server number({})", serverProperties.getNumber());
+        LOGGER.debug("Servers({})", serverProperties.getServers());
+    }
 
     @PostConstruct
     public void init() {

@@ -12,21 +12,21 @@ import ru.gadjini.telegram.smart.bot.commons.model.SendFileResult;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
 import ru.gadjini.telegram.smart.bot.commons.service.flood.UploadFloodWaitController;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MediaMessageService;
-import ru.gadjini.telegram.smart.bot.commons.service.telegram.TelegramBotApiService;
+import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
 
 import java.util.Set;
 
 @Service
 public class FileUploader {
 
-    private TelegramBotApiService telegramBotApiService;
+    private CancelableTelegramBotApiMediaService telegramBotApiService;
 
     private MediaMessageService mediaMessageService;
 
     private UploadFloodWaitController uploadFloodWaitController;
 
     @Autowired
-    public FileUploader(TelegramBotApiService telegramBotApiService,
+    public FileUploader(CancelableTelegramBotApiMediaService telegramBotApiService,
                         @Qualifier("mediaLimits") MediaMessageService mediaMessageService, UploadFloodWaitController uploadFloodWaitController) {
         this.telegramBotApiService = telegramBotApiService;
         this.mediaMessageService = mediaMessageService;

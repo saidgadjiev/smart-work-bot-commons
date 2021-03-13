@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
 import ru.gadjini.telegram.smart.bot.commons.job.DownloadJob;
-import ru.gadjini.telegram.smart.bot.commons.job.WorkQueueJob;
 import ru.gadjini.telegram.smart.bot.commons.job.UploadJob;
+import ru.gadjini.telegram.smart.bot.commons.job.WorkQueueJob;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileDownloadService;
 
 @Component
