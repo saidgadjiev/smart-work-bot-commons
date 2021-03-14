@@ -55,12 +55,12 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
 
     private TempFileService tempFileService;
 
-    private TelegramBotApiExceptionHandler exceptionHandler;
+    private TelegramBotApiMethodExecutor exceptionHandler;
 
     @Autowired
     public CancelableTelegramBotApiMediaService(BotProperties botProperties, ObjectMapper objectMapper,
                                                 DefaultBotOptions botOptions, BotApiProperties botApiProperties, TempFileService tempFileService,
-                                                TelegramBotApiExceptionHandler exceptionHandler) {
+                                                TelegramBotApiMethodExecutor exceptionHandler) {
         super(botProperties, objectMapper, botOptions, botApiProperties, exceptionHandler);
         this.botProperties = botProperties;
         this.objectMapper = objectMapper;
