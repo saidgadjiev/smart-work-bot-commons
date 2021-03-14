@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import ru.gadjini.telegram.smart.bot.commons.configuration.SmartBotConfiguration;
+import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkProfiles;
 import ru.gadjini.telegram.smart.bot.commons.dao.WorkQueueDao;
 import ru.gadjini.telegram.smart.bot.commons.domain.DownloadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
-@Profile({SmartBotConfiguration.PROFILE_PROD_SECONDARY, SmartBotConfiguration.PROFILE_DEV_SECONDARY})
+@Profile({SmartWorkProfiles.PROFILE_PROD_SECONDARY, SmartWorkProfiles.PROFILE_DEV_SECONDARY})
 public class DownloadSynchronizerJob {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadSynchronizerJob.class);

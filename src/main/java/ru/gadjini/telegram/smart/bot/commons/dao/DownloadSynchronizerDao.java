@@ -4,14 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import ru.gadjini.telegram.smart.bot.commons.configuration.SmartBotConfiguration;
+import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkProfiles;
 import ru.gadjini.telegram.smart.bot.commons.domain.DownloadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 
 import java.util.List;
 
 @Repository
-@Profile({SmartBotConfiguration.PROFILE_PROD_SECONDARY, SmartBotConfiguration.PROFILE_DEV_SECONDARY})
+@Profile({SmartWorkProfiles.PROFILE_PROD_SECONDARY, SmartWorkProfiles.PROFILE_DEV_SECONDARY})
 public class DownloadSynchronizerDao {
 
     private JdbcTemplate jdbcTemplate;

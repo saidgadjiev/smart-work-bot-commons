@@ -1,14 +1,15 @@
 package ru.gadjini.telegram.smart.bot.commons.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import ru.gadjini.telegram.smart.bot.commons.configuration.SmartBotConfiguration;
 
 import java.util.Map;
 
 @ConfigurationProperties("server")
 public class ServerProperties {
 
-    private int number = SmartBotConfiguration.PRIMARY_SERVER_NUMBER;
+    private static final int PRIMARY_SERVER_NUMBER = 1;
+
+    private int number = PRIMARY_SERVER_NUMBER;
 
     private Map<Integer, String> servers;
 
@@ -29,7 +30,7 @@ public class ServerProperties {
     }
 
     public String getPrimaryServer() {
-        return servers.get(SmartBotConfiguration.PRIMARY_SERVER_NUMBER);
+        return servers.get(PRIMARY_SERVER_NUMBER);
     }
 
     public String getServer(int number) {
@@ -37,15 +38,15 @@ public class ServerProperties {
     }
 
     public boolean isSecondaryServer(int serverNumber) {
-        return serverNumber == SmartBotConfiguration.PRIMARY_SERVER_NUMBER;
+        return serverNumber == PRIMARY_SERVER_NUMBER;
     }
 
     public boolean isPrimaryServer(int serverNumber) {
-        return serverNumber == SmartBotConfiguration.PRIMARY_SERVER_NUMBER;
+        return serverNumber == PRIMARY_SERVER_NUMBER;
     }
 
     public boolean isPrimaryServer() {
-        return number == SmartBotConfiguration.PRIMARY_SERVER_NUMBER;
+        return number == PRIMARY_SERVER_NUMBER;
     }
 
     public boolean isMe(int serverNumber) {

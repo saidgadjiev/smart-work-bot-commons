@@ -7,7 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.gadjini.telegram.smart.bot.commons.configuration.SmartBotConfiguration;
+import ru.gadjini.telegram.smart.bot.commons.common.Profiles;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.DeleteContentRequest;
 import ru.gadjini.telegram.smart.bot.commons.service.TokenValidator;
@@ -17,7 +17,7 @@ import java.io.File;
 
 @RestController
 @RequestMapping("/contents")
-@Profile({SmartBotConfiguration.PROFILE_DEV_PRIMARY, SmartBotConfiguration.PROFILE_PROD_PRIMARY})
+@Profile({Profiles.PROFILE_DEV_PRIMARY, Profiles.PROFILE_PROD_PRIMARY})
 public class ContentsController {
 
     private TempFileService tempFileService;

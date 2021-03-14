@@ -3,13 +3,13 @@ package ru.gadjini.telegram.smart.bot.commons.dao;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import ru.gadjini.telegram.smart.bot.commons.configuration.SmartBotConfiguration;
+import ru.gadjini.telegram.smart.bot.commons.common.Profiles;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 
 import java.util.List;
 
 @Repository
-@Profile({SmartBotConfiguration.PROFILE_PROD_PRIMARY, SmartBotConfiguration.PROFILE_DEV_PRIMARY})
+@Profile({Profiles.PROFILE_PROD_PRIMARY, Profiles.PROFILE_DEV_PRIMARY})
 public class UploadSynchronizerDao {
 
     private JdbcTemplate jdbcTemplate;
