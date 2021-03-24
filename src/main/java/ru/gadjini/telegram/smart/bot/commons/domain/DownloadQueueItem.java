@@ -24,8 +24,6 @@ public class DownloadQueueItem extends QueueItem {
 
     public static final String EXTRA = "extra";
 
-    public static final String ATTEMPTS = "attempts";
-
     public static final String NEXT_RUN_AT = "next_run_at";
 
     public static final String SYNCED = "synced_";
@@ -45,8 +43,6 @@ public class DownloadQueueItem extends QueueItem {
     private boolean deleteParentDir;
 
     private Object extra;
-
-    private int attempts;
 
     private ZonedDateTime nextRunAt;
 
@@ -114,14 +110,6 @@ public class DownloadQueueItem extends QueueItem {
 
     public void setProducer(String producer) {
         this.producer = producer;
-    }
-
-    public int getAttempts() {
-        return attempts;
-    }
-
-    public void setAttempts(int attempts) {
-        this.attempts = attempts;
     }
 
     public ZonedDateTime getNextRunAt() {

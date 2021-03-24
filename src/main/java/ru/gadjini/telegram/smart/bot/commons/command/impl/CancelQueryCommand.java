@@ -25,7 +25,7 @@ public class CancelQueryCommand implements CallbackBotCommand {
     }
 
     @Override
-    public void processMessage(CallbackQuery callbackQuery, RequestParams requestParams) {
+    public void processCallbackQuery(CallbackQuery callbackQuery, RequestParams requestParams) {
         int queryItemId = requestParams.getInt(Arg.QUEUE_ITEM_ID.getKey());
         conversionJob.cancel(callbackQuery.getMessage().getChatId(), callbackQuery.getMessage().getMessageId(),
                 callbackQuery.getId(), queryItemId);

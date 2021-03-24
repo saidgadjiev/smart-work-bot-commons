@@ -21,7 +21,7 @@ public abstract class QueueDao {
 
     public static final String MIN_LAST_RUN_AT_ID = "id";
 
-    public static final String POLL_ORDER_BY = " ORDER BY qu.attempts, qu.id ";
+    public static final String POLL_ORDER_BY = " ORDER BY qu.attempts, qu.next_run_at, qu.id ";
 
     public static final String DELETE_COMPLETED_INTERVAL = "interval '3 days'";
 
@@ -89,7 +89,7 @@ public abstract class QueueDao {
 
     public void resetProcessing() {
         getJdbcTemplate().update(
-                "UPDATE " + getQueueName() + " SET status = 0, attempts = GREATEST(0, attempts - 1) " +
+                "UPDATE " + getQueueName() + " SET status = 0 " +
                         "WHERE status = 1 " + getQueueDaoDelegate().getBaseAdditionalClause() + " AND server = " + serverProperties.getNumber()
         );
     }

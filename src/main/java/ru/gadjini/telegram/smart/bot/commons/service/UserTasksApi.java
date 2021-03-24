@@ -18,16 +18,17 @@ public class UserTasksApi {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserTasksApi.class);
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate;
 
     private ServerProperties serverProperties;
 
     private AuthProperties authProperties;
 
     @Autowired
-    public UserTasksApi(ServerProperties serverProperties, AuthProperties authProperties) {
+    public UserTasksApi(ServerProperties serverProperties, AuthProperties authProperties, RestTemplate restTemplate) {
         this.serverProperties = serverProperties;
         this.authProperties = authProperties;
+        this.restTemplate = restTemplate;
     }
 
     public boolean cancel(int serverNumber, long userId, int taskId) {

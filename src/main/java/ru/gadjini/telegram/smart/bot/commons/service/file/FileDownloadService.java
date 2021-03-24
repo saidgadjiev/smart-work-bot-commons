@@ -9,7 +9,6 @@ import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 @Service
 public class FileDownloadService {
@@ -48,11 +47,11 @@ public class FileDownloadService {
     }
 
     public void cancelDownloads(int producerId) {
-        downloadingJob.cancelDownloads(workQueueDao.getQueueName(), producerId);
+        downloadingJob.cancelDownloads(workQueueDao.getProducerName(), producerId);
     }
 
-    public void cancelDownloads(Set<Integer> producerIds) {
-        downloadingJob.cancelDownloads(workQueueDao.getQueueName(), producerIds);
+    public void cancelDownloadsByUserId(int userId) {
+        downloadingJob.cancelDownloadsByUserId(workQueueDao.getProducerName(), userId);
     }
 
     public void cancelDownloads() {

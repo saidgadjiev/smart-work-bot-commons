@@ -21,12 +21,13 @@ public class ContentsApi {
 
     private AuthProperties authProperties;
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate;
 
     @Autowired
-    public ContentsApi(ServerProperties serverProperties, AuthProperties authProperties) {
+    public ContentsApi(ServerProperties serverProperties, AuthProperties authProperties, RestTemplate restTemplate) {
         this.serverProperties = serverProperties;
         this.authProperties = authProperties;
+        this.restTemplate = restTemplate;
     }
 
     public void delete(SmartTempFile tempFile) {

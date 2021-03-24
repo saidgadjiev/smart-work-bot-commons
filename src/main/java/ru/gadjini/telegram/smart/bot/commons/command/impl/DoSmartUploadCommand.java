@@ -42,7 +42,7 @@ public class DoSmartUploadCommand implements CallbackBotCommand {
     }
 
     @Override
-    public void processMessage(CallbackQuery callbackQuery, RequestParams requestParams) {
+    public void processCallbackQuery(CallbackQuery callbackQuery, RequestParams requestParams) {
         fileUploadService.uploadSmartFile(requestParams.getInt(Arg.QUEUE_ITEM_ID.getKey()));
         Locale locale = userService.getLocaleOrDefault(callbackQuery.getFrom().getId());
         messageService.sendAnswerCallbackQuery(

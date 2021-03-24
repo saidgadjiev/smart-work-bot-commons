@@ -16,12 +16,13 @@ public class ThreadsStatsApi {
 
     private AuthProperties authProperties;
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate;
 
     @Autowired
-    public ThreadsStatsApi(ServerProperties serverProperties, AuthProperties authProperties) {
+    public ThreadsStatsApi(ServerProperties serverProperties, AuthProperties authProperties, RestTemplate restTemplate) {
         this.serverProperties = serverProperties;
         this.authProperties = authProperties;
+        this.restTemplate = restTemplate;
     }
 
     public ThreadsStats threadsStats(int serverNumber) {

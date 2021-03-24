@@ -48,7 +48,7 @@ public class ExecutorsConfiguration {
     @Value("${download.light.threads:2}")
     private int downloadLightThreads;
 
-    @Value("${upload.heavy.threads:4}")
+    @Value("${upload.heavy.threads:1}")
     private int uploadHeavyThreads;
 
     @Value("${upload.light.threads:2}")
@@ -181,8 +181,8 @@ public class ExecutorsConfiguration {
             }
         };
 
-        LOGGER.debug("Heavy download threads initialized with pool size: {}", heavyTaskExecutor.getCorePoolSize());
-        LOGGER.debug("Light download threads initialized with pool size: {}", lightTaskExecutor.getCorePoolSize());
+        LOGGER.debug("Heavy upload threads initialized with pool size: {}", heavyTaskExecutor.getCorePoolSize());
+        LOGGER.debug("Light upload threads initialized with pool size: {}", lightTaskExecutor.getCorePoolSize());
         executorService.setExecutors(Map.of(SmartExecutorService.JobWeight.LIGHT, lightTaskExecutor, SmartExecutorService.JobWeight.HEAVY, heavyTaskExecutor));
         executorService.setRejectJobHandler(SmartExecutorService.JobWeight.HEAVY, job -> uploadJob.rejectTask(job));
         executorService.setRejectJobHandler(SmartExecutorService.JobWeight.LIGHT, job -> uploadJob.rejectTask(job));

@@ -14,6 +14,7 @@ import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodControlException;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
+import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
@@ -132,6 +133,8 @@ public class DownloadJob extends WorkQueueJobPusher {
             long unusedDownloadsCount = downloadingQueueService.unusedDownloadsCount(workQueueDao.getProducerName(), workQueueDao.getQueueName(), weight);
             if (unusedDownloadsCount < availableUnusedDownloadsCount) {
                 return (List<QueueItem>) (Object) downloadingQueueService.poll(workQueueDao.getProducerName(), weight, limit);
+            } else if (jobsProperties.isEnableLogging()) {
+                LOGGER.debug("No available downloads({}, {})", availableUnusedDownloadsCount, unusedDownloadsCount);
             }
         } else {
             return (List<QueueItem>) (Object) downloadingQueueService.poll(workQueueDao.getProducerName(), weight, limit);
@@ -147,6 +150,12 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     public void cancelDownloads(String producer, int producerId) {
         cancelDownloads(producer, Set.of(producerId));
+    }
+
+    public void cancelDownloadsByUserId(String producer, int userId) {
+        List<DownloadQueueItem> deleted = downloadingQueueService.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
+        downloadTasksExecutor.cancel(deleted.stream().map(DownloadQueueItem::getId).collect(Collectors.toList()), true);
+        downloadingQueueService.releaseResources(deleted);
     }
 
     public void cancelDownloads(String producer, Set<Integer> producerIds) {
@@ -204,7 +213,8 @@ public class DownloadJob extends WorkQueueJobPusher {
 
         @Override
         public SmartExecutorService.JobWeight getWeight() {
-            return downloadingQueueItem.getFile().getSize() > mediaLimitProperties.getLightFileMaxWeight() ? SmartExecutorService.JobWeight.HEAVY : SmartExecutorService.JobWeight.LIGHT;
+            return downloadingQueueItem.getFile().getSize() > mediaLimitProperties.getLightFileMaxWeight()
+                    ? SmartExecutorService.JobWeight.HEAVY : SmartExecutorService.JobWeight.LIGHT;
         }
 
         @Override
@@ -259,7 +269,7 @@ public class DownloadJob extends WorkQueueJobPusher {
             }
             try {
                 fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
-                        downloadingQueueItem.getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
+                        getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
 
                 SmartTempFile downloadedFile = tempFileService.moveTo(tempFile, FileTarget.DOWNLOAD);
                 tempFile = downloadedFile;
@@ -286,8 +296,8 @@ public class DownloadJob extends WorkQueueJobPusher {
             }
         }
 
-        private void moveFileToDownloadDir() {
-
+        private Progress getProgress() {
+            return downloadingQueueItem.getAttempts() == 1 ? downloadingQueueItem.getProgress() : null;
         }
 
         private void noneCriticalException(DownloadQueueItem downloadingQueueItem, Throwable e) {

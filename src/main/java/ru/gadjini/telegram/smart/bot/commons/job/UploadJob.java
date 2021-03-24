@@ -11,7 +11,7 @@ import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodControlException;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
-import ru.gadjini.telegram.smart.bot.commons.exception.ZeroLengthException;
+import ru.gadjini.telegram.smart.bot.commons.exception.InvalidMediaMessageException;
 import ru.gadjini.telegram.smart.bot.commons.model.SendFileResult;
 import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
@@ -30,6 +30,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
+@SuppressWarnings("PMD")
 public class UploadJob extends WorkQueueJobPusher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UploadJob.class);
@@ -130,6 +131,12 @@ public class UploadJob extends WorkQueueJobPusher {
         deleteUploads(producer, producerIds);
     }
 
+    public void cancelUploadsByUserId(String producer, int userId) {
+        List<UploadQueueItem> deleted = uploadQueueService.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
+        uploadTasksExecutor.cancel(deleted.stream().map(UploadQueueItem::getId).collect(Collectors.toList()), true);
+        uploadQueueService.releaseResources(deleted);
+    }
+
     public void deleteUploads(String producer, Set<Integer> producerIds) {
         List<UploadQueueItem> deleted = uploadQueueService.deleteByProducerIdsWithReturning(producer, producerIds);
         uploadTasksExecutor.cancel(deleted.stream().map(UploadQueueItem::getId).collect(Collectors.toList()), true);
@@ -161,10 +168,11 @@ public class UploadJob extends WorkQueueJobPusher {
         public void execute() {
             currentUploads.add(uploadQueueItem);
             try {
+                updateProgress();
                 SendFileResult sendFileResult = null;
                 try {
-                    sendFileResult = fileUploader.upload(uploadQueueItem);
-                } catch (ZeroLengthException ignore) {
+                    sendFileResult = fileUploader.upload(uploadQueueItem, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
+                } catch (InvalidMediaMessageException ignore) {
 
                 }
                 uploadQueueService.setCompleted(uploadQueueItem.getId());
@@ -199,7 +207,8 @@ public class UploadJob extends WorkQueueJobPusher {
 
         @Override
         public SmartExecutorService.JobWeight getWeight() {
-            return uploadQueueItem.getFileSize() > mediaLimitProperties.getLightFileMaxWeight() ? SmartExecutorService.JobWeight.HEAVY : SmartExecutorService.JobWeight.LIGHT;
+            return uploadQueueItem.getFileSize() > mediaLimitProperties.getLightFileMaxWeight()
+                    ? SmartExecutorService.JobWeight.HEAVY : SmartExecutorService.JobWeight.LIGHT;
         }
 
         @Override
@@ -234,6 +243,12 @@ public class UploadJob extends WorkQueueJobPusher {
                 uploadQueueService.deleteById(uploadQueueItem.getId());
                 uploadQueueService.releaseResources(uploadQueueItem);
                 LOGGER.debug("Canceled upload({}, {}, {})", uploadQueueItem.getMethod(), uploadQueueItem.getProducerTable(), uploadQueueItem.getProducerId());
+            }
+        }
+
+        private void updateProgress() {
+            if (uploadQueueItem.getAttempts() != 1) {
+                uploadQueueItem.setProgress(null);
             }
         }
 

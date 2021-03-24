@@ -27,16 +27,29 @@ public class FileUploader {
 
     @Autowired
     public FileUploader(CancelableTelegramBotApiMediaService telegramBotApiService,
-                        @Qualifier("mediaLimits") MediaMessageService mediaMessageService, UploadFloodWaitController uploadFloodWaitController) {
+                        @Qualifier("mediaLimits") MediaMessageService mediaMessageService,
+                        UploadFloodWaitController uploadFloodWaitController) {
         this.telegramBotApiService = telegramBotApiService;
         this.mediaMessageService = mediaMessageService;
         this.uploadFloodWaitController = uploadFloodWaitController;
     }
 
-    public SendFileResult upload(UploadQueueItem uploadQueueItem) {
+    public SendFileResult upload(UploadQueueItem uploadQueueItem, boolean withFloodControl) {
+        applySmartOptionsToBody(uploadQueueItem);
+        if (withFloodControl) {
+            return uploadWithFloodControl(uploadQueueItem);
+        } else {
+            return uploadWithoutFloodControl(uploadQueueItem);
+        }
+    }
+
+    private SendFileResult uploadWithoutFloodControl(UploadQueueItem uploadQueueItem) {
+        return doUpload(uploadQueueItem.getMethod(), uploadQueueItem.getBody(), uploadQueueItem.getProgress());
+    }
+
+    private SendFileResult uploadWithFloodControl(UploadQueueItem uploadQueueItem) {
         String key = getFilePathOrFileId(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
         uploadFloodWaitController.startUploading(key);
-        applySmartOptionsToBody(uploadQueueItem);
 
         try {
             return doUpload(uploadQueueItem.getMethod(), uploadQueueItem.getBody(), uploadQueueItem.getProgress());

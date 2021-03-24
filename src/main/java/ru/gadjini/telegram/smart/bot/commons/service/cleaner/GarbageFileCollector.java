@@ -66,6 +66,8 @@ public class GarbageFileCollector {
                 boolean b = FileUtils.deleteQuietly(file);
                 if (!b) {
                     LOGGER.debug("Garbage file not deleted({}, {})", file.getAbsolutePath(), algorithm.getClass().getSimpleName());
+                } else {
+                    LOGGER.debug("Garbage file deleted({})", file.getAbsolutePath());
                 }
 
                 return b;

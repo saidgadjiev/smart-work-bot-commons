@@ -27,7 +27,7 @@ import java.util.Objects;
 @Component
 public class UpdateQueryStatusCommand implements CallbackBotCommand {
 
-    private static final int CACHE_TIME_IN_SECONDS = 30;
+    private static final int CACHE_TIME_IN_SECONDS = 60;
 
     private UpdateQueryStatusCommandMessageProvider messageProvider;
 
@@ -65,7 +65,7 @@ public class UpdateQueryStatusCommand implements CallbackBotCommand {
     }
 
     @Override
-    public void processMessage(CallbackQuery callbackQuery, RequestParams requestParams) {
+    public void processCallbackQuery(CallbackQuery callbackQuery, RequestParams requestParams) {
         int queryItemId = requestParams.getInt(Arg.QUEUE_ITEM_ID.getKey());
         Locale locale = userService.getLocaleOrDefault(callbackQuery.getFrom().getId());
         QueueItem queueItem = queueService.getById(queryItemId);

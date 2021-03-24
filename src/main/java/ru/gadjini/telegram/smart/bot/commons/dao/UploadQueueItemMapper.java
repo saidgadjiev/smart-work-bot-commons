@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.*;
+import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
@@ -72,6 +73,9 @@ public class UploadQueueItemMapper {
             if (StringUtils.isNotBlank(fileFormat)) {
                 item.setFileFormat(Format.valueOf(fileFormat));
             }
+        }
+        if (columns.contains(QueueItem.ATTEMPTS)) {
+            item.setAttempts(rs.getInt(QueueItem.ATTEMPTS));
         }
 
         return item;

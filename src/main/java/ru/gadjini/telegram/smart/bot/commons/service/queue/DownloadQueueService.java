@@ -105,6 +105,10 @@ public class DownloadQueueService extends QueueService {
         return downloadingQueueDao.countFloodWaits();
     }
 
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+        return downloadingQueueDao.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
+    }
+
     @Override
     public QueueDao getQueueDao() {
         return downloadingQueueDao;

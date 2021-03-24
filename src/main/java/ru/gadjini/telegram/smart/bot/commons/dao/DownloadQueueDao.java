@@ -96,7 +96,7 @@ public class DownloadQueueDao extends QueueDao {
                         "    UPDATE " + DownloadQueueItem.NAME + " SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +
                         "WHERE id IN(SELECT id FROM " + DownloadQueueItem.NAME + " qu WHERE qu.status = 0 AND qu.next_run_at <= now() and qu.producer = ? " +
                         "AND (file).size " + (jobWeight.equals(SmartExecutorService.JobWeight.LIGHT) ? "<=" : ">") + "  ?\n" +
-                        " ORDER BY qu.attempts, qu.next_run_at, qu.id LIMIT " + limit + ")\n" +
+                        POLL_ORDER_BY + " LIMIT " + limit + ")\n" +
                         "RETURNING *\n" +
                         ")\n" +
                         "SELECT *, (file).*\n" +
@@ -153,6 +153,17 @@ public class DownloadQueueDao extends QueueDao {
         );
     }
 
+    public long getDownloadedFilesCount(String producer, int producerId) {
+        return jdbcTemplate.query(
+                "SELECT COUNT(*) as cnt FROM " + DownloadQueueItem.NAME + " WHERE producer = ? AND producer_id = ?",
+                ps -> {
+                    ps.setString(1, producer);
+                    ps.setInt(2, producerId);
+                },
+                (rs) -> rs.next() ? rs.getLong("cnt") : 0
+        );
+    }
+
     public List<DownloadQueueItem> deleteByProducerIdsWithReturning(String producer, Set<Integer> producerIds) {
         if (producerIds.isEmpty()) {
             return Collections.emptyList();
@@ -164,6 +175,20 @@ public class DownloadQueueDao extends QueueDao {
                         + producerIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") RETURNING *)\n" +
                         "SELECT *, (file).* FROM del",
                 ps -> ps.setString(1, producer),
+                (rs, rowNum) -> map(rs)
+        );
+    }
+
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+        return jdbcTemplate.query(
+                "WITH del AS (DELETE\n" +
+                        "FROM " + DownloadQueueItem.NAME + "\n" +
+                        "WHERE producer = ? AND user_id = ? AND status IN(0, 1) RETURNING *)\n" +
+                        "SELECT *, (file).* FROM del",
+                ps -> {
+                    ps.setString(1, producer);
+                    ps.setInt(2, userId);
+                },
                 (rs, rowNum) -> map(rs)
         );
     }

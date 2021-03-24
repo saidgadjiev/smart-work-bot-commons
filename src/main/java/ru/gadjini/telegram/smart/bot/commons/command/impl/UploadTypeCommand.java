@@ -54,7 +54,7 @@ public class UploadTypeCommand implements CallbackBotCommand {
     }
 
     @Override
-    public void processMessage(CallbackQuery callbackQuery, RequestParams requestParams) {
+    public void processCallbackQuery(CallbackQuery callbackQuery, RequestParams requestParams) {
         if (requestParams.contains(Arg.UPLOAD_TYPE.getKey())) {
             int uploadId = requestParams.getInt(Arg.QUEUE_ITEM_ID.getKey());
             UploadType uploadType = requestParams.get(Arg.UPLOAD_TYPE.getKey(), UploadType::valueOf);

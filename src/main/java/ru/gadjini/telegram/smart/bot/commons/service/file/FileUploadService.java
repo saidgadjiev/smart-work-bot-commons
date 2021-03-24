@@ -1,5 +1,7 @@
 package ru.gadjini.telegram.smart.bot.commons.service.file;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,8 @@ import java.util.Set;
 
 @Service
 public class FileUploadService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUploadService.class);
 
     private UploadQueueService uploadQueueService;
 
@@ -95,11 +99,15 @@ public class FileUploadService {
     }
 
     public void cancelUploads(int producerId) {
-        uploadJob.cancelUploads(workQueueDao.getQueueName(), producerId);
+        uploadJob.cancelUploads(workQueueDao.getProducerName(), producerId);
     }
 
     public void cancelUploads(Set<Integer> producerIds) {
-        uploadJob.cancelUploads(workQueueDao.getQueueName(), producerIds);
+        uploadJob.cancelUploads(workQueueDao.getProducerName(), producerIds);
+    }
+
+    public void cancelUploadsByUserId(int userId) {
+        uploadJob.cancelUploadsByUserId(workQueueDao.getProducerName(), userId);
     }
 
     public void cancelUploads() {
@@ -130,6 +138,7 @@ public class FileUploadService {
 
             File result = tempFileService.moveTo(file, FileTarget.UPLOAD);
             inputFile.setMedia(result, inputFile.getMediaName());
+            LOGGER.debug("Move({}, {})", file.getAbsolutePath(), result.getAbsolutePath());
         }
     }
 }

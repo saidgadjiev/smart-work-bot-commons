@@ -30,6 +30,8 @@ public class QueueItem {
 
     public static final String SERVER = "server";
 
+    public static final String ATTEMPTS = "attempts";
+
     private int id;
 
     private int userId;
@@ -55,6 +57,8 @@ public class QueueItem {
     private String exception;
 
     private int server;
+
+    private int attempts;
 
     public final int getId() {
         return id;
@@ -158,6 +162,14 @@ public class QueueItem {
 
     public void setServer(int server) {
         this.server = server;
+    }
+
+    public int getAttempts() {
+        return attempts;
+    }
+
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
     }
 
     public enum Status {
