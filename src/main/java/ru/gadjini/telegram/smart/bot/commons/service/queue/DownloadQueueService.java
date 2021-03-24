@@ -86,6 +86,10 @@ public class DownloadQueueService extends QueueService {
         return downloadingQueueDao.deleteOrphan(producer, producerTable);
     }
 
+    public long getDownloadedFilesCount(String producer, int producerId) {
+        return downloadingQueueDao.getDownloadedFilesCount(producer, producerId);
+    }
+
     public void deleteCompletedAndOrphans(String producer, String producerTable, Set<Integer> producerIds) {
         List<DownloadQueueItem> deleted = new ArrayList<>(deleteByProducerIdsWithReturning(producerTable, producerIds));
         List<DownloadQueueItem> orphanDownloads = deleteOrphanDownloads(producer, producerTable);
