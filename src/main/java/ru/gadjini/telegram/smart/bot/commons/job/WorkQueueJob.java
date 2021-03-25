@@ -29,10 +29,8 @@ import ru.gadjini.telegram.smart.bot.commons.service.queue.QueueJobConfigurator;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.QueueWorker;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.QueueWorkerFactory;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.WorkQueueService;
-import ru.gadjini.telegram.smart.bot.commons.service.queue.event.CurrentTasksCanceled;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.QueueJobInitialization;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.QueueJobShuttingDown;
-import ru.gadjini.telegram.smart.bot.commons.service.queue.event.TaskCanceled;
 import ru.gadjini.telegram.smart.bot.commons.utils.MemoryUtils;
 
 import javax.annotation.PostConstruct;
@@ -206,23 +204,23 @@ public class WorkQueueJob extends WorkQueueJobPusher {
             for (QueueItem item : queueItems) {
                 if (serverProperties.isMe(item.getServer())) {
                     executor.cancel(item.getId(), true);
-                    applicationEventPublisher.publishEvent(new TaskCanceled(item));
                 } else {
                     userTasksService.cancel(item.getServer(), item.getUserId(), item.getId());
                 }
             }
             fileDownloadService.cancelDownloadsByUserId((int) chatId);
             fileUploadService.cancelUploadsByUserId((int) chatId);
-            applicationEventPublisher.publishEvent(new CurrentTasksCanceled((int) chatId));
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
     public void cancel(int jobId) {
+        LOGGER.debug("Cancel query({})", jobId);
         QueueItem queueItem = workQueueService.deleteAndGetProcessingOrWaitingById(jobId);
 
         if (queueItem == null) {
+            LOGGER.debug("Query item not found({})", jobId);
             return;
         }
 
@@ -230,7 +228,6 @@ public class WorkQueueJob extends WorkQueueJobPusher {
             fileDownloadService.cancelDownloads(jobId);
             fileUploadService.cancelUploads(jobId);
         }
-        applicationEventPublisher.publishEvent(new TaskCanceled(queueItem));
     }
 
     public void cancel(long chatId, int messageId, String queryId, int jobId) {
@@ -255,9 +252,8 @@ public class WorkQueueJob extends WorkQueueJobPusher {
                     fileDownloadService.cancelDownloads(jobId);
                     fileUploadService.cancelUploads(jobId);
                 }
-                applicationEventPublisher.publishEvent(new TaskCanceled(queueItem));
             } else if (!userTasksService.cancel(queueItem.getServer(), chatId, jobId)) {
-                workQueueService.deleteById(jobId);
+                workQueueService.deleteByIdAndStatuses(jobId, Set.of(QueueItem.Status.WAITING, QueueItem.Status.PROCESSING));
                 fileDownloadService.cancelDownloads(jobId);
                 fileUploadService.cancelUploads(jobId);
             }

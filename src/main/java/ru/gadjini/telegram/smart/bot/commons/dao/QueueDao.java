@@ -10,9 +10,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class QueueDao {
@@ -224,6 +222,23 @@ public abstract class QueueDao {
                     return null;
                 }
         );
+    }
+
+    public final Set<Integer> getOrphanItems(Set<Integer> itemsToCheck) {
+        if (itemsToCheck.isEmpty()) {
+            return Set.of();
+        }
+        String in = itemsToCheck.stream().map(String::valueOf).collect(Collectors.joining(","));
+        List<Integer> reallyProcessing = getJdbcTemplate().query(
+                "SELECT id FROM " + getQueueName() + " WHERE id IN(" + in + ")",
+                (rs, rowNum) -> rs.getInt(QueueItem.ID)
+        );
+
+        Set<Integer> result = new HashSet<>(itemsToCheck);
+
+        result.removeAll(reallyProcessing);
+
+        return result;
     }
 
     public final String getQueueName() {

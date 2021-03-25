@@ -50,6 +50,10 @@ public abstract class QueueService {
         getQueueDao().setWaiting(id, seconds, exception);
     }
 
+    public final Set<Integer> getOrphanItems(Set<Integer> itemsToCheck) {
+        return getQueueDao().getOrphanItems(itemsToCheck);
+    }
+
     public final long countByStatusAllTime(QueueItem.Status status) {
         return getQueueDao().countByStatusAllTime(status);
     }
