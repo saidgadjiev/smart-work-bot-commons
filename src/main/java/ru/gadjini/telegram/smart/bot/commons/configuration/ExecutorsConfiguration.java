@@ -16,13 +16,12 @@ import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
+import ru.gadjini.telegram.smart.bot.commons.service.concurrent.pool.ThreadPool;
+import ru.gadjini.telegram.smart.bot.commons.service.concurrent.pool.ThreadPoolFactory;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Configuration
 @SuppressWarnings("CPD-START")
@@ -54,8 +53,11 @@ public class ExecutorsConfiguration {
     @Value("${upload.light.threads:2}")
     private int uploadLightThreads;
 
+    private ThreadPoolFactory threadPoolExecutorFactory;
+
     @Autowired
-    public ExecutorsConfiguration(ServerProperties serverProperties) {
+    public ExecutorsConfiguration(ServerProperties serverProperties, ThreadPoolFactory threadPoolExecutorFactory) {
+        this.threadPoolExecutorFactory = threadPoolExecutorFactory;
         LOGGER.debug("Server number({})", serverProperties.getNumber());
         LOGGER.debug("Servers({})", serverProperties.getServers());
     }
@@ -90,20 +92,8 @@ public class ExecutorsConfiguration {
     public SmartExecutorService queueTaskExecutor(UserService userService,
                                                   @Qualifier("messageLimits") MessageService messageService, LocalisationService localisationService) {
         SmartExecutorService executorService = new SmartExecutorService(messageService, localisationService, userService);
-        ThreadPoolExecutor lightTaskExecutor = new ThreadPoolExecutor(workQueueLightThreads, workQueueLightThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
-        ThreadPoolExecutor heavyTaskExecutor = new ThreadPoolExecutor(workQueueHeavyThreads, workQueueHeavyThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
+        ThreadPool lightTaskExecutor = threadPoolExecutorFactory.createPool(workQueueLightThreads, executorService::complete);
+        ThreadPool heavyTaskExecutor = threadPoolExecutorFactory.createPool(workQueueHeavyThreads, executorService::complete);
 
         LOGGER.debug("Conversion light thread pool({})", lightTaskExecutor.getCorePoolSize());
         LOGGER.debug("Conversion heavy thread pool({})", heavyTaskExecutor.getCorePoolSize());
@@ -135,21 +125,8 @@ public class ExecutorsConfiguration {
     public SmartExecutorService downloadTasksExecutor(UserService userService, @Qualifier("messageLimits") MessageService messageService,
                                                       LocalisationService localisationService) {
         SmartExecutorService executorService = new SmartExecutorService(messageService, localisationService, userService);
-        ThreadPoolExecutor heavyTaskExecutor = new ThreadPoolExecutor(downloadHeavyThreads, downloadHeavyThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
-
-        ThreadPoolExecutor lightTaskExecutor = new ThreadPoolExecutor(downloadLightThreads, downloadLightThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
+        ThreadPool lightTaskExecutor = threadPoolExecutorFactory.createPool(downloadLightThreads, executorService::complete);
+        ThreadPool heavyTaskExecutor = threadPoolExecutorFactory.createPool(downloadHeavyThreads, executorService::complete);
 
         LOGGER.debug("Heavy download threads initialized with pool size: {}", heavyTaskExecutor.getCorePoolSize());
         LOGGER.debug("Light download threads initialized with pool size: {}", lightTaskExecutor.getCorePoolSize());
@@ -165,21 +142,8 @@ public class ExecutorsConfiguration {
     public SmartExecutorService uploadTasksExecutor(UserService userService, @Qualifier("messageLimits") MessageService messageService,
                                                     LocalisationService localisationService) {
         SmartExecutorService executorService = new SmartExecutorService(messageService, localisationService, userService);
-        ThreadPoolExecutor heavyTaskExecutor = new ThreadPoolExecutor(uploadHeavyThreads, uploadHeavyThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
-
-        ThreadPoolExecutor lightTaskExecutor = new ThreadPoolExecutor(uploadLightThreads, uploadLightThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<>()) {
-            @Override
-            protected void afterExecute(Runnable r, Throwable t) {
-                super.afterExecute(r, t);
-                executorService.complete(r);
-            }
-        };
+        ThreadPool lightTaskExecutor = threadPoolExecutorFactory.createPool(uploadLightThreads, executorService::complete);
+        ThreadPool heavyTaskExecutor = threadPoolExecutorFactory.createPool(uploadHeavyThreads, executorService::complete);
 
         LOGGER.debug("Heavy upload threads initialized with pool size: {}", heavyTaskExecutor.getCorePoolSize());
         LOGGER.debug("Light upload threads initialized with pool size: {}", lightTaskExecutor.getCorePoolSize());

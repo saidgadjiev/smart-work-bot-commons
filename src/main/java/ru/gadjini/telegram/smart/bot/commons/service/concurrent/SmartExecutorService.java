@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
+import ru.gadjini.telegram.smart.bot.commons.service.concurrent.pool.ThreadPool;
 import ru.gadjini.telegram.smart.bot.commons.service.localisation.ErrorCode;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 
@@ -25,7 +26,7 @@ public class SmartExecutorService {
 
     private UserService userService;
 
-    private Map<JobWeight, ThreadPoolExecutor> executors;
+    private Map<JobWeight, ThreadPool> executors;
 
     private final Map<Integer, Future<?>> processing = new ConcurrentHashMap<>();
 
@@ -37,7 +38,7 @@ public class SmartExecutorService {
         this.userService = userService;
     }
 
-    public void setExecutors(Map<JobWeight, ThreadPoolExecutor> executors) {
+    public void setExecutors(Map<JobWeight, ThreadPool> executors) {
         this.executors = executors;
     }
 
@@ -101,7 +102,7 @@ public class SmartExecutorService {
         ids.forEach(jobId -> cancel(jobId, userOriginated));
     }
 
-    public ThreadPoolExecutor getExecutor(JobWeight jobWeight) {
+    public ThreadPool getExecutor(JobWeight jobWeight) {
         return executors.get(jobWeight);
     }
 
@@ -111,14 +112,14 @@ public class SmartExecutorService {
 
     public void shutdown() {
         try {
-            for (Map.Entry<JobWeight, ThreadPoolExecutor> entry : executors.entrySet()) {
+            for (Map.Entry<JobWeight, ThreadPool> entry : executors.entrySet()) {
                 entry.getValue().shutdown();
             }
             Set<Integer> jobs = new HashSet<>(processing.keySet());
             for (Integer job : jobs) {
                 cancel(job, false);
             }
-            for (Map.Entry<JobWeight, ThreadPoolExecutor> entry : executors.entrySet()) {
+            for (Map.Entry<JobWeight, ThreadPool> entry : executors.entrySet()) {
                 if (!entry.getValue().awaitTermination(10, TimeUnit.SECONDS)) {
                     entry.getValue().shutdownNow();
                 }

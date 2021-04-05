@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
+import ru.gadjini.telegram.smart.bot.commons.service.concurrent.pool.ThreadPool;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class WorkQueueJobPusher {
 
@@ -25,7 +25,7 @@ public abstract class WorkQueueJobPusher {
             return;
         }
 
-        ThreadPoolExecutor heavyExecutor = getExecutor().getExecutor(SmartExecutorService.JobWeight.HEAVY);
+        ThreadPool heavyExecutor = getExecutor().getExecutor(SmartExecutorService.JobWeight.HEAVY);
         if (heavyExecutor.getActiveCount() < heavyExecutor.getCorePoolSize()) {
             int limit = heavyExecutor.getCorePoolSize() - heavyExecutor.getActiveCount();
             if (enableJobsLogging()) {
@@ -41,7 +41,7 @@ public abstract class WorkQueueJobPusher {
             logger.debug("Heavy threads busy");
         }
 
-        ThreadPoolExecutor lightExecutor = getExecutor().getExecutor(SmartExecutorService.JobWeight.LIGHT);
+        ThreadPool lightExecutor = getExecutor().getExecutor(SmartExecutorService.JobWeight.LIGHT);
         if (lightExecutor.getActiveCount() < lightExecutor.getCorePoolSize()) {
             int limit = lightExecutor.getCorePoolSize() - lightExecutor.getActiveCount();
             if (enableJobsLogging()) {
