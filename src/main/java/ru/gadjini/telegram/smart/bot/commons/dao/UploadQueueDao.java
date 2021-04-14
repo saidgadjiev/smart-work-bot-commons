@@ -125,16 +125,12 @@ public class UploadQueueDao extends QueueDao {
 
     public List<UploadQueueItem> poll(String producer, SmartExecutorService.JobWeight jobWeight, int limit) {
         return jdbcTemplate.query(
-                "WITH r AS (\n" +
-                        "    UPDATE upload_queue SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +
+                "UPDATE upload_queue SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +
                         "WHERE id IN(SELECT id FROM upload_queue qu WHERE qu.status = 0 AND qu.next_run_at <= now() " +
                         "and qu.producer = ? and synced = true " +
                         "AND file_size " + (jobWeight.equals(SmartExecutorService.JobWeight.LIGHT) ? "<=" : ">") + " ?\n" +
                         QueueDao.POLL_ORDER_BY + " LIMIT " + limit + ")\n" +
-                        "RETURNING *\n" +
-                        ")\n" +
-                        "SELECT *\n" +
-                        "FROM r",
+                        "RETURNING *",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setLong(2, mediaLimitProperties.getLightFileMaxWeight());

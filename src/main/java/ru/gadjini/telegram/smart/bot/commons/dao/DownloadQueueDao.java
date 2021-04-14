@@ -92,15 +92,11 @@ public class DownloadQueueDao extends QueueDao {
 
     public List<DownloadQueueItem> poll(String producer, SmartExecutorService.JobWeight jobWeight, int limit) {
         return jdbcTemplate.query(
-                "WITH r AS (\n" +
-                        "    UPDATE " + DownloadQueueItem.NAME + " SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +
+                "UPDATE " + DownloadQueueItem.NAME + " SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +
                         "WHERE id IN(SELECT id FROM " + DownloadQueueItem.NAME + " qu WHERE qu.status = 0 AND qu.next_run_at <= now() and qu.producer = ? " +
                         "AND (file).size " + (jobWeight.equals(SmartExecutorService.JobWeight.LIGHT) ? "<=" : ">") + "  ?\n" +
                         POLL_ORDER_BY + " LIMIT " + limit + ")\n" +
-                        "RETURNING *\n" +
-                        ")\n" +
-                        "SELECT *, (file).*\n" +
-                        "FROM r",
+                        "RETURNING *, (file).*",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setLong(2, mediaLimitProperties.getLightFileMaxWeight());
