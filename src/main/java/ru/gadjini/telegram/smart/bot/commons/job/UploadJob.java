@@ -1,5 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.job;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +19,11 @@ import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploader;
-import ru.gadjini.telegram.smart.bot.commons.service.message.ForceMediaMessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.UploadCompleted;
 
 import javax.annotation.PostConstruct;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -185,7 +186,7 @@ public class UploadJob extends WorkQueueJobPusher {
                         floodControlException(uploadQueueItem, (FloodControlException) e);
                     } else if (e instanceof FloodWaitException) {
                         floodWaitException(uploadQueueItem, (FloodWaitException) e);
-                    } else if (ForceMediaMessageService.shouldTryToUploadAgain(e)) {
+                    } else if (shouldTryToUploadAgain(e)) {
                         noneCriticalException(uploadQueueItem, e);
                     } else {
                         uploadQueueService.setExceptionStatus(uploadQueueItem.getId(), e);
@@ -250,6 +251,13 @@ public class UploadJob extends WorkQueueJobPusher {
             if (uploadQueueItem.getAttempts() != 1) {
                 uploadQueueItem.setProgress(null);
             }
+        }
+
+        public boolean shouldTryToUploadAgain(Throwable ex) {
+            int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
+            int floodWaitExceptionIndexOf = ExceptionUtils.indexOfThrowable(ex, FloodWaitException.class);
+
+            return socketException != -1 || floodWaitExceptionIndexOf != -1;
         }
 
         private void noneCriticalException(UploadQueueItem uploadQueueItem, Throwable e) {
