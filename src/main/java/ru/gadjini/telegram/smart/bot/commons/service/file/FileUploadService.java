@@ -1,7 +1,5 @@
 package ru.gadjini.telegram.smart.bot.commons.service.file;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,6 @@ import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.job.UploadJob;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
-import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartUploadKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
@@ -27,8 +24,6 @@ import java.util.Set;
 
 @Service
 public class FileUploadService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileUploadService.class);
 
     private UploadQueueService uploadQueueService;
 
@@ -46,15 +41,11 @@ public class FileUploadService {
 
     private UserSettingsService userSettingsService;
 
-    private FileUploader fileUploader;
-
-    private TempFileService tempFileService;
-
     @Autowired
     public FileUploadService(UploadQueueService uploadQueueService,
                              WorkQueueDao workQueueDao, SmartUploadKeyboardService smartKeyboardService,
                              SmartUploadMessageBuilder smartUploadMessageBuilder, @Qualifier("messageLimits") MessageService messageService,
-                             UserService userService, UserSettingsService userSettingsService, FileUploader fileUploader, TempFileService tempFileService) {
+                             UserService userService, UserSettingsService userSettingsService) {
         this.uploadQueueService = uploadQueueService;
         this.workQueueDao = workQueueDao;
         this.smartKeyboardService = smartKeyboardService;
@@ -62,8 +53,6 @@ public class FileUploadService {
         this.messageService = messageService;
         this.userService = userService;
         this.userSettingsService = userSettingsService;
-        this.fileUploader = fileUploader;
-        this.tempFileService = tempFileService;
     }
 
     @Autowired
