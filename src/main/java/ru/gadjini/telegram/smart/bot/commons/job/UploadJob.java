@@ -253,7 +253,7 @@ public class UploadJob extends WorkQueueJobPusher {
             }
         }
 
-        public boolean shouldTryToUploadAgain(Throwable ex) {
+        private boolean shouldTryToUploadAgain(Throwable ex) {
             int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
             int floodWaitExceptionIndexOf = ExceptionUtils.indexOfThrowable(ex, FloodWaitException.class);
 

@@ -1,5 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.service.file;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.NoHttpResponseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,8 +58,12 @@ public class FileDownloader {
     public static boolean isNoneCriticalDownloadingException(Throwable ex) {
         int indexOfNoResponseException = ExceptionUtils.indexOfThrowable(ex, NoHttpResponseException.class);
         int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
+        boolean restart500 = false;
+        if (StringUtils.isNotBlank(ex.getMessage())) {
+            restart500 = ex.getMessage().contains("Internal Server Error: restart");
+        }
 
-        return indexOfNoResponseException != -1 || socketException != -1;
+        return indexOfNoResponseException != -1 || socketException != -1 || restart500;
     }
 
     private void downloadWithoutFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
