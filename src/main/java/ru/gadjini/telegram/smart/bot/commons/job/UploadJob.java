@@ -24,6 +24,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.queue.event.UploadCompleted
 
 import javax.annotation.PostConstruct;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -256,8 +257,9 @@ public class UploadJob extends WorkQueueJobPusher {
         private boolean shouldTryToUploadAgain(Throwable ex) {
             int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
             int floodWaitExceptionIndexOf = ExceptionUtils.indexOfThrowable(ex, FloodWaitException.class);
+            int socketTimeOutException = ExceptionUtils.indexOfThrowable(ex, SocketTimeoutException.class);
 
-            return socketException != -1 || floodWaitExceptionIndexOf != -1;
+            return socketException != -1 || floodWaitExceptionIndexOf != -1 || socketTimeOutException != -1;
         }
 
         private void noneCriticalException(UploadQueueItem uploadQueueItem, Throwable e) {

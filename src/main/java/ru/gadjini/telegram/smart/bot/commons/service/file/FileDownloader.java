@@ -12,6 +12,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.flood.DownloadFloodWaitCont
 import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
 
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Objects;
 
 @Service
@@ -58,12 +59,14 @@ public class FileDownloader {
     public static boolean isNoneCriticalDownloadingException(Throwable ex) {
         int indexOfNoResponseException = ExceptionUtils.indexOfThrowable(ex, NoHttpResponseException.class);
         int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
+        int socketTimeOutException = ExceptionUtils.indexOfThrowable(ex, SocketTimeoutException.class);
         boolean restart500 = false;
         if (StringUtils.isNotBlank(ex.getMessage())) {
             restart500 = ex.getMessage().contains("Internal Server Error: restart");
         }
 
-        return indexOfNoResponseException != -1 || socketException != -1 || restart500;
+        return indexOfNoResponseException != -1 || socketException != -1
+                || socketTimeOutException  != -1 || restart500;
     }
 
     private void downloadWithoutFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
