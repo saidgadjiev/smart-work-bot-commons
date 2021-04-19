@@ -165,23 +165,19 @@ public class DownloadQueueDao extends QueueDao {
         if (producerIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return jdbcTemplate.query(
-                "WITH del AS (DELETE\n" +
+        return jdbcTemplate.query("DELETE\n" +
                         "FROM " + DownloadQueueItem.NAME + "\n" +
                         "WHERE producer = ? AND producer_id IN ("
-                        + producerIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") RETURNING *)\n" +
-                        "SELECT *, (file).* FROM del",
+                        + producerIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") RETURNING *, (file).*",
                 ps -> ps.setString(1, producer),
                 (rs, rowNum) -> map(rs)
         );
     }
 
     public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
-        return jdbcTemplate.query(
-                "WITH del AS (DELETE\n" +
+        return jdbcTemplate.query("DELETE\n" +
                         "FROM " + DownloadQueueItem.NAME + "\n" +
-                        "WHERE producer = ? AND user_id = ? AND status IN(0, 1) RETURNING *)\n" +
-                        "SELECT *, (file).* FROM del",
+                        "WHERE producer = ? AND user_id = ? AND status IN(0, 1) RETURNING *, (file).*",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setInt(2, userId);
@@ -191,11 +187,8 @@ public class DownloadQueueDao extends QueueDao {
     }
 
     public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producerName, int producerId) {
-        return jdbcTemplate.query(
-                "WITH del AS (DELETE\n" +
-                        "FROM " + DownloadQueueItem.NAME + "\n" +
-                        "WHERE producer = ? AND producer_id = ? AND status IN(0, 1) RETURNING *)\n" +
-                        "SELECT *, (file).* FROM del",
+        return jdbcTemplate.query("DELETE FROM " + DownloadQueueItem.NAME + "\n" +
+                        "WHERE producer = ? AND producer_id = ? AND status IN(0, 1) RETURNING *, (file).*",
                 ps -> {
                     ps.setString(1, producerName);
                     ps.setInt(2, producerId);
@@ -212,12 +205,10 @@ public class DownloadQueueDao extends QueueDao {
     }
 
     public List<DownloadQueueItem> deleteOrphan(String producer, String producerTable) {
-        return jdbcTemplate.query(
-                "WITH del as (delete\n" +
+        return jdbcTemplate.query("delete\n" +
                         "from downloading_queue dq\n" +
                         "where producer = ? and producer_id != " + DownloadFileCommand.FAKE_PRODUCER + "\n" +
-                        "  and not exists(select 1 from " + producerTable + " uq where uq.id = dq.producer_id) RETURNING *) " +
-                        "SELECT *, (file).* FROM del",
+                        "  and not exists(select 1 from " + producerTable + " uq where uq.id = dq.producer_id) RETURNING *, (file).*",
                 ps -> ps.setString(1, producer),
                 (rs, rowNum) -> map(rs)
         );

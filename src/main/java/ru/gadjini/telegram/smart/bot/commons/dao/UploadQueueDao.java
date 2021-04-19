@@ -100,21 +100,16 @@ public class UploadQueueDao extends QueueDao {
         if (producerIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return jdbcTemplate.query(
-                "WITH del AS(DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND producer_id IN("
-                        + producerIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") RETURNING *) " +
-                        "SELECT * FROM del",
-                ps -> {
-                    ps.setString(1, producer);
-                },
+        return jdbcTemplate.query("DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND producer_id IN("
+                        + producerIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") RETURNING *",
+                ps -> ps.setString(1, producer),
                 (rs, rowNum) -> map(rs)
         );
     }
 
     public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
-        return jdbcTemplate.query(
-                "WITH del AS(DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND user_id = ? AND status IN(0,1) RETURNING *) " +
-                        "SELECT * FROM del",
+        return jdbcTemplate.query("DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND user_id = ? " +
+                        "AND status IN(0,1) RETURNING *",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setInt(2, userId);
@@ -125,8 +120,7 @@ public class UploadQueueDao extends QueueDao {
 
     public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producer, int producerId) {
         return jdbcTemplate.query(
-                "WITH del AS(DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND producer_id = ? AND status IN(0,1) RETURNING *) " +
-                        "SELECT * FROM del",
+                "DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND producer_id = ? AND status IN(0,1) RETURNING *",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setInt(2, producerId);
@@ -152,12 +146,10 @@ public class UploadQueueDao extends QueueDao {
     }
 
     public List<UploadQueueItem> deleteOrphan(String producer, String producerTable) {
-        return jdbcTemplate.query(
-                "WITH del AS(delete\n" +
+        return jdbcTemplate.query("delete\n" +
                         "from upload_queue dq\n" +
                         "where producer = ?\n" +
-                        "  and not exists(select 1 from " + producerTable + " uq where uq.id = dq.producer_id) RETURNING *) " +
-                        "SELECT * FROM del",
+                        "  and not exists(select 1 from " + producerTable + " uq where uq.id = dq.producer_id) RETURNING *",
                 ps -> ps.setString(1, producer),
                 (rs, rowNum) -> map(rs)
         );
@@ -175,9 +167,7 @@ public class UploadQueueDao extends QueueDao {
     }
 
     public UploadQueueItem updateUploadType(int id, UploadType uploadType) {
-        return jdbcTemplate.query(
-                "WITH upd AS (UPDATE upload_queue SET upload_type = ? WHERE id = ? AND status = ? RETURNING id, user_id, upload_type, file_format)\n" +
-                        "SELECT * FROM upd",
+        return jdbcTemplate.query("UPDATE upload_queue SET upload_type = ? WHERE id = ? AND status = ? RETURNING *",
                 ps -> {
                     ps.setString(1, uploadType.name());
                     ps.setInt(2, id);
