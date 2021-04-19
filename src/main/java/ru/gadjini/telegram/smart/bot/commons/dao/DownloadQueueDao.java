@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.gadjini.telegram.smart.bot.commons.command.impl.DownloadFileCommand;
 import ru.gadjini.telegram.smart.bot.commons.domain.DownloadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
@@ -214,7 +215,7 @@ public class DownloadQueueDao extends QueueDao {
         return jdbcTemplate.query(
                 "WITH del as (delete\n" +
                         "from downloading_queue dq\n" +
-                        "where producer = ?\n" +
+                        "where producer = ? and producer_id != " + DownloadFileCommand.FAKE_PRODUCER + "\n" +
                         "  and not exists(select 1 from " + producerTable + " uq where uq.id = dq.producer_id) RETURNING *) " +
                         "SELECT *, (file).* FROM del",
                 ps -> ps.setString(1, producer),

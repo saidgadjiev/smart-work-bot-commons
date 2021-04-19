@@ -19,6 +19,8 @@ import java.util.Locale;
 @Component
 public class DownloadFileCommand implements BotCommand, NavigableBotCommand {
 
+    public static final int FAKE_PRODUCER = -1;
+
     private FileDownloadService fileDownloadService;
 
     private MessageMediaService messageMediaService;
@@ -50,7 +52,7 @@ public class DownloadFileCommand implements BotCommand, NavigableBotCommand {
     @Override
     public void processNonCommandUpdate(Message message, String text) {
         MessageMedia media = messageMediaService.getMedia(message, Locale.getDefault());
-        fileDownloadService.createDownload(media.toTgFile(), -1, message.getFrom().getId());
+        fileDownloadService.createDownload(media.toTgFile(), FAKE_PRODUCER, message.getFrom().getId());
 
         messageService.sendMessage(SendMessage.builder().chatId(String.valueOf(message.getChatId()))
                 .text("Okay i'll do it").build());
