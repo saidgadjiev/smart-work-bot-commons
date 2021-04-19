@@ -98,6 +98,10 @@ public class UploadQueueService extends QueueService {
         return uploadQueueDao.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
     }
 
+    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producer, int producerId) {
+        return uploadQueueDao.deleteAndGetProcessingOrWaitingByProducerId(producer, producerId);
+    }
+
     public void setWaitingExpiredSmartUploads(long expirationInSeconds) {
         uploadQueueDao.setWaitingExpiredSmartUploads(expirationInSeconds);
     }

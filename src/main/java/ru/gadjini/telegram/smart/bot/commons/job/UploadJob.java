@@ -129,6 +129,12 @@ public class UploadJob extends WorkQueueJobPusher {
         cancelUploads(producer, Set.of(producerId));
     }
 
+    public void cancelProcessingOrWaitingUploads(String producerName, int producerId) {
+        List<UploadQueueItem> deleted = uploadQueueService.deleteAndGetProcessingOrWaitingByProducerId(producerName, producerId);
+        uploadTasksExecutor.cancel(deleted.stream().map(UploadQueueItem::getId).collect(Collectors.toList()), true);
+        uploadQueueService.releaseResources(deleted);
+    }
+
     public void cancelUploads(String producer, Set<Integer> producerIds) {
         deleteUploads(producer, producerIds);
     }

@@ -189,6 +189,20 @@ public class DownloadQueueDao extends QueueDao {
         );
     }
 
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producerName, int producerId) {
+        return jdbcTemplate.query(
+                "WITH del AS (DELETE\n" +
+                        "FROM " + DownloadQueueItem.NAME + "\n" +
+                        "WHERE producer = ? AND producer_id = ? AND status IN(0, 1) RETURNING *)\n" +
+                        "SELECT *, (file).* FROM del",
+                ps -> {
+                    ps.setString(1, producerName);
+                    ps.setInt(2, producerId);
+                },
+                (rs, rowNum) -> map(rs)
+        );
+    }
+
     public long countFloodWaits() {
         return getJdbcTemplate().query(
                 "SELECT COUNT(*) as cnt FROM " + DownloadQueueItem.NAME + " WHERE exception like '%" + FloodWaitException.class.getSimpleName() + "%'",

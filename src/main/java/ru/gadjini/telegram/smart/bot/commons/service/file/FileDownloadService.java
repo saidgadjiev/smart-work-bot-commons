@@ -50,6 +50,10 @@ public class FileDownloadService {
         downloadingJob.cancelDownloads(workQueueDao.getProducerName(), producerId);
     }
 
+    public void cancelProcessingOrWaitingDownloads(int producerId) {
+        downloadingJob.cancelProcessingOrWaitingDownloads(workQueueDao.getProducerName(), producerId);
+    }
+
     public void cancelDownloadsByUserId(int userId) {
         downloadingJob.cancelDownloadsByUserId(workQueueDao.getProducerName(), userId);
     }

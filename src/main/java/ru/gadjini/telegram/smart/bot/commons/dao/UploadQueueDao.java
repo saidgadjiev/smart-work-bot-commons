@@ -123,6 +123,18 @@ public class UploadQueueDao extends QueueDao {
         );
     }
 
+    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producer, int producerId) {
+        return jdbcTemplate.query(
+                "WITH del AS(DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND producer_id = ? AND status IN(0,1) RETURNING *) " +
+                        "SELECT * FROM del",
+                ps -> {
+                    ps.setString(1, producer);
+                    ps.setInt(2, producerId);
+                },
+                (rs, rowNum) -> map(rs)
+        );
+    }
+
     public List<UploadQueueItem> poll(String producer, SmartExecutorService.JobWeight jobWeight, int limit) {
         return jdbcTemplate.query(
                 "UPDATE upload_queue SET " + QueueDao.getUpdateList(serverProperties.getNumber()) +

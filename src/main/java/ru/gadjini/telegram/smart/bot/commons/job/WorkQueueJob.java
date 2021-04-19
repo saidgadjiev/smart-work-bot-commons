@@ -225,8 +225,8 @@ public class WorkQueueJob extends WorkQueueJobPusher {
         }
 
         if (!executor.cancel(jobId, true)) {
-            fileDownloadService.cancelDownloads(jobId);
-            fileUploadService.cancelUploads(jobId);
+            fileDownloadService.cancelProcessingOrWaitingDownloads(jobId);
+            fileUploadService.cancelProcessingOrWaitingUploads(jobId);
         }
     }
 
@@ -249,13 +249,13 @@ public class WorkQueueJob extends WorkQueueJobPusher {
             if (serverProperties.isMe(queueItem.getServer())) {
                 if (!executor.cancel(jobId, true)) {
                     workQueueService.deleteByIdAndStatuses(jobId, Set.of(QueueItem.Status.WAITING, QueueItem.Status.PROCESSING));
-                    fileDownloadService.cancelDownloads(jobId);
-                    fileUploadService.cancelUploads(jobId);
+                    fileDownloadService.cancelProcessingOrWaitingDownloads(jobId);
+                    fileUploadService.cancelProcessingOrWaitingUploads(jobId);
                 }
             } else if (!userTasksService.cancel(queueItem.getServer(), chatId, jobId)) {
                 workQueueService.deleteByIdAndStatuses(jobId, Set.of(QueueItem.Status.WAITING, QueueItem.Status.PROCESSING));
-                fileDownloadService.cancelDownloads(jobId);
-                fileUploadService.cancelUploads(jobId);
+                fileDownloadService.cancelProcessingOrWaitingDownloads(jobId);
+                fileUploadService.cancelProcessingOrWaitingUploads(jobId);
             }
         }
         if (queueJobConfigurator.isNeedUpdateMessageAfterCancel(queueItem)) {

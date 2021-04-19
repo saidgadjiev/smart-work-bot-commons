@@ -113,6 +113,10 @@ public class DownloadQueueService extends QueueService {
         return downloadingQueueDao.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
     }
 
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByProducerId(String producerName, int producerId) {
+        return downloadingQueueDao.deleteAndGetProcessingOrWaitingByProducerId(producerName, producerId);
+    }
+
     @Override
     public QueueDao getQueueDao() {
         return downloadingQueueDao;

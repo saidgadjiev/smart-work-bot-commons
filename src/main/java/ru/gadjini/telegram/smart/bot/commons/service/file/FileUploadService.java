@@ -87,6 +87,10 @@ public class FileUploadService {
         uploadJob.cancelUploads(workQueueDao.getProducerName(), producerId);
     }
 
+    public void cancelProcessingOrWaitingUploads(int producerId) {
+        uploadJob.cancelProcessingOrWaitingUploads(workQueueDao.getProducerName(), producerId);
+    }
+
     public void cancelUploads(Set<Integer> producerIds) {
         uploadJob.cancelUploads(workQueueDao.getProducerName(), producerIds);
     }
