@@ -39,6 +39,14 @@ public class FileDownloader {
         return downloadFileByFileId(fileId, fileSize, null, outputFile, withFloodControl);
     }
 
+    public String downloadFileByFileId(String fileId, long fileSize) {
+        return downloadFileByFileId(fileId, fileSize, null, null, true);
+    }
+
+    public String downloadFileByFileId(String fileId, long fileSize, boolean withFloodControl) {
+        return downloadFileByFileId(fileId, fileSize, null, null, withFloodControl);
+    }
+
     public String downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile, boolean withFloodControl) {
         if (withFloodControl) {
             return downloadWithFloodControl(fileId, fileSize, progress, outputFile);
