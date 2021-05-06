@@ -1,10 +1,12 @@
-package ru.gadjini.telegram.smart.bot.commons.service.cleaner;
+package ru.gadjini.telegram.smart.bot.commons.job;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.gadjini.telegram.smart.bot.commons.service.cleaner.GarbageAlgorithm;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 
@@ -12,26 +14,34 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
-public class GarbageFileCollector {
+public class GarbageFileCollectorJob {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GarbageFileCollector.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GarbageFileCollectorJob.class);
 
     private Set<GarbageAlgorithm> algorithms;
 
     private TempFileService tempFileService;
 
     @Autowired
-    public GarbageFileCollector(TempFileService tempFileService, Set<GarbageAlgorithm> algorithms) {
+    public GarbageFileCollectorJob(TempFileService tempFileService, Set<GarbageAlgorithm> algorithms) {
         this.tempFileService = tempFileService;
         this.algorithms = algorithms;
     }
 
-    public int clean() {
+    @Scheduled(cron = "0 0 * * * *")
+    public void run() {
+        LOGGER.debug("Start({})", LocalDateTime.now());
+        int clean = clean();
+        LOGGER.debug("Finish({}, {})", clean, LocalDateTime.now());
+    }
+
+    private int clean() {
         int totalDeleted = 0;
         for (FileTarget fileTarget : FileTarget.values()) {
             totalDeleted += clean(fileTarget);
