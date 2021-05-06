@@ -1,6 +1,5 @@
 package ru.gadjini.telegram.smart.bot.commons.service.file.temp;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import ru.gadjini.telegram.smart.bot.commons.utils.SmartFileUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,32 +71,6 @@ public class TempFileService {
         } else {
             return FileTarget.TEMP;
         }
-    }
-
-    public SmartTempFile moveTo(SmartTempFile srcFile, FileTarget fileTarget) {
-        File dest = moveTo(srcFile.getFile(), fileTarget);
-
-        return new SmartTempFile(dest, srcFile.isDeleteParentDir());
-    }
-
-    public File moveTo(File srcFile, FileTarget fileTarget) {
-        FileTarget srcTarget = getFileTarget(srcFile.getAbsolutePath());
-
-        if (srcTarget == fileTarget) {
-            return srcFile;
-        }
-
-        String filePathWithoutFileTargetBasePath = srcFile.getAbsolutePath().replace(getRootDir(srcTarget), "");
-
-        String destFilePath = getRootDir(fileTarget) + filePathWithoutFileTargetBasePath;
-        File dest = new File(destFilePath);
-        try {
-            FileUtils.moveFile(srcFile, dest);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return dest;
     }
 
     public SmartTempFile createTempDir(FileTarget tempFileType, long chatId, String tag) {
