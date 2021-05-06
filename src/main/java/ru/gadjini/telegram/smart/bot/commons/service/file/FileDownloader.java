@@ -77,8 +77,7 @@ public class FileDownloader {
         } catch (TelegramApiRequestException ex) {
             if (isWrongFileIdException(ex)) {
                 floodWaitController.downloadingFloodWait();
-                //TODO: Идея не понимает что код сюда никогда не дойдет
-                return null;
+                throw new IllegalStateException("Non reachable code");
             } else {
                 throw ex;
             }
@@ -93,8 +92,7 @@ public class FileDownloader {
             } catch (TelegramApiRequestException ex) {
                 if (isWrongFileIdException(ex)) {
                     floodWaitController.downloadingFloodWait();
-                    //TODO: Идея не понимает что код сюда никогда не дойдет
-                    return null;
+                    throw new IllegalStateException("Non reachable code");
                 } else {
                     throw ex;
                 }
