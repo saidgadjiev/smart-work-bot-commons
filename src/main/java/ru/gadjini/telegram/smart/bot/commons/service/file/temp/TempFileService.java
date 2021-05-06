@@ -142,6 +142,9 @@ public class TempFileService {
     }
 
     public void delete(SmartTempFile file) {
+        if (file == null) {
+            return;
+        }
         try {
             if (isRemoteFile(file.getAbsolutePath())) {
                 contentApi.delete(file);

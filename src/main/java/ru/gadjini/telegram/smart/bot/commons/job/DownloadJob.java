@@ -20,9 +20,7 @@ import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileDownloader;
-import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
-import ru.gadjini.telegram.smart.bot.commons.service.format.FormatService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.DownloadCompleted;
 
@@ -38,8 +36,6 @@ import java.util.stream.Collectors;
 public class DownloadJob extends WorkQueueJobPusher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadJob.class);
-
-    private static final String TAG = "down";
 
     private DownloadQueueService downloadingQueueService;
 
@@ -59,8 +55,6 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     private ApplicationEventPublisher applicationEventPublisher;
 
-    private FormatService formatService;
-
     private JobsProperties jobsProperties;
 
     @Value("${available.unused.downloads.count:-1}")
@@ -70,7 +64,7 @@ public class DownloadJob extends WorkQueueJobPusher {
     public DownloadJob(DownloadQueueService downloadingQueueService, FileDownloader fileDownloader,
                        TempFileService tempFileService, FileManagerProperties fileManagerProperties,
                        MediaLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
-                       ApplicationEventPublisher applicationEventPublisher, FormatService formatService,
+                       ApplicationEventPublisher applicationEventPublisher,
                        JobsProperties jobsProperties) {
         this.downloadingQueueService = downloadingQueueService;
         this.fileDownloader = fileDownloader;
@@ -79,7 +73,6 @@ public class DownloadJob extends WorkQueueJobPusher {
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.applicationEventPublisher = applicationEventPublisher;
-        this.formatService = formatService;
         this.jobsProperties = jobsProperties;
     }
 
@@ -261,24 +254,15 @@ public class DownloadJob extends WorkQueueJobPusher {
         }
 
         private void doDownloadFile(DownloadQueueItem downloadingQueueItem) {
-            if (StringUtils.isBlank(downloadingQueueItem.getFilePath())) {
-                String ext;
-                if (downloadingQueueItem.getFile().getFormat() != null) {
-                    ext = downloadingQueueItem.getFile().getFormat().getExt();
-                } else {
-                    ext = formatService.getExt(downloadingQueueItem.getFile().getFileName(), downloadingQueueItem.getFile().getMimeType());
-                }
-                tempFile = tempFileService.createTempFile(FileTarget.DOWNLOAD, downloadingQueueItem.getUserId(),
-                        downloadingQueueItem.getFile().getFileId(), TAG, ext);
-            } else {
+            if (StringUtils.isNotBlank(downloadingQueueItem.getFilePath())) {
                 tempFile = new SmartTempFile(new File(downloadingQueueItem.getFilePath()));
             }
             try {
-                fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
+                String filePath = fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
                         getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
 
-                downloadingQueueService.setCompleted(downloadingQueueItem.getId(), tempFile.getAbsolutePath());
-                downloadingQueueItem.setFilePath(tempFile.getAbsolutePath());
+                downloadingQueueService.setCompleted(downloadingQueueItem.getId(), filePath);
+                downloadingQueueItem.setFilePath(filePath);
                 applicationEventPublisher.publishEvent(new DownloadCompleted(downloadingQueueItem));
             } catch (Throwable e) {
                 tempFileService.delete(tempFile);

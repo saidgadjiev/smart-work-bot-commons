@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaService {
@@ -44,8 +45,6 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
     private final Map<String, SmartTempFile> uploading = new ConcurrentHashMap<>();
 
     private final BotProperties botProperties;
-
-    private final BotApiProperties botApiProperties;
 
     private ObjectMapper objectMapper;
 
@@ -64,7 +63,6 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
         super(botProperties, objectMapper, botOptions, botApiProperties, exceptionHandler);
         this.botProperties = botProperties;
         this.objectMapper = objectMapper;
-        this.botApiProperties = botApiProperties;
         this.tempFileService = tempFileService;
         this.exceptionHandler = exceptionHandler;
         try {
@@ -78,42 +76,55 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
     }
 
     @Override
-    public void downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
-        downloading.put(fileId, outputFile);
+    public String downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
+        if (outputFile != null) {
+            downloading.put(fileId, outputFile);
+        }
         try {
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             LOGGER.debug("Start downloadFileByFileId({}, {})", fileId, MemoryUtils.humanReadableByteCount(fileSize));
 
-            exceptionHandler.executeWithoutResult(null, () -> {
+            AtomicLong resultFileSize = new AtomicLong();
+            String resultFilePath = exceptionHandler.executeWithResult(null, () -> {
                 updateProgressBeforeStart(progress);
                 GetFile gf = new GetFile();
                 gf.setFileId(fileId);
                 HttpPost downloadingRequest = createDownloadingRequest(gf);
                 downloadingRequests.put(fileId, downloadingRequest);
+                String filePath;
                 try {
                     String responseContent = (String) sendHttpPostRequestMethod.invoke(this, downloadingRequest);
                     org.telegram.telegrambots.meta.api.objects.File file = gf.deserializeResponse(responseContent);
                     if (downloadingRequest.isAborted()) {
                         throw new DownloadCanceledException("Download canceled " + fileId);
                     }
-                    String filePath = getLocalFilePath(file.getFilePath());
+                    resultFileSize.set(file.getFileSize());
+                    filePath = getLocalFilePath(file.getFilePath());
 
-                    try {
-                        FileUtils.copyFile(new File(filePath), outputFile.getFile());
-                    } catch (IOException e) {
-                        throw new org.telegram.telegrambots.meta.exceptions.TelegramApiException(e);
-                    } finally {
-                        FileUtils.deleteQuietly(new File(filePath));
+                    if (outputFile != null) {
+                        try {
+                            FileUtils.copyFile(new File(filePath), outputFile.getFile());
+                        } catch (IOException e) {
+                            throw new org.telegram.telegrambots.meta.exceptions.TelegramApiException(e);
+                        } finally {
+                            FileUtils.deleteQuietly(new File(filePath));
+                        }
+                        filePath = outputFile.getAbsolutePath();
                     }
                 } finally {
                     downloadingRequests.remove(fileId);
                 }
                 updateProgressAfterComplete(progress);
+
+                return filePath;
             });
 
             stopWatch.stop();
-            LOGGER.debug("Finish downloadFileByFileId({}, {}, {})", fileId, MemoryUtils.humanReadableByteCount(outputFile.length()), stopWatch.getTime(TimeUnit.SECONDS));
+            LOGGER.debug("Finish downloadFileByFileId({}, {}, {})", fileId,
+                    MemoryUtils.humanReadableByteCount(resultFileSize.get()), stopWatch.getTime(TimeUnit.SECONDS));
+
+            return resultFilePath;
         } catch (TelegramApiException | FloodWaitException e) {
             LOGGER.error(e.getMessage() + "({}, {})", fileId, MemoryUtils.humanReadableByteCount(fileSize));
             throw e;
@@ -192,12 +203,6 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
     @Override
     public String getBotToken() {
         return botProperties.getToken();
-    }
-
-    private String getLocalFilePath(String apiFilePath) {
-        String path = apiFilePath.replace(botApiProperties.getWorkDir(), "");
-
-        return botApiProperties.getLocalWorkDir() + path;
     }
 
     private HttpPost createDownloadingRequest(GetFile method) throws org.telegram.telegrambots.meta.exceptions.TelegramApiException {

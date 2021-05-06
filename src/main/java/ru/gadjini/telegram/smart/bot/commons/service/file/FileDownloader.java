@@ -31,19 +31,19 @@ public class FileDownloader {
         this.floodWaitController = floodWaitController;
     }
 
-    public void downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile) {
-        downloadFileByFileId(fileId, fileSize, null, outputFile, true);
+    public String downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile) {
+        return downloadFileByFileId(fileId, fileSize, null, outputFile, true);
     }
 
-    public void downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile, boolean withFloodControl) {
-        downloadFileByFileId(fileId, fileSize, null, outputFile, withFloodControl);
+    public String downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile, boolean withFloodControl) {
+        return downloadFileByFileId(fileId, fileSize, null, outputFile, withFloodControl);
     }
 
-    public void downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile, boolean withFloodControl) {
+    public String downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile, boolean withFloodControl) {
         if (withFloodControl) {
-            downloadWithFloodControl(fileId, fileSize, progress, outputFile);
+            return downloadWithFloodControl(fileId, fileSize, progress, outputFile);
         } else {
-            downloadWithoutFloodControl(fileId, fileSize, progress, outputFile);
+            return downloadWithoutFloodControl(fileId, fileSize, progress, outputFile);
         }
     }
 
@@ -68,29 +68,33 @@ public class FileDownloader {
         }
 
         return indexOfNoResponseException != -1 || socketException != -1
-                || socketTimeOutException  != -1 || restart500 || noSuchFileException != -1;
+                || socketTimeOutException != -1 || restart500 || noSuchFileException != -1;
     }
 
-    private void downloadWithoutFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
+    private String downloadWithoutFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
         try {
-            telegramLocalBotApiService.downloadFileByFileId(fileId, fileSize, progress, outputFile);
+            return telegramLocalBotApiService.downloadFileByFileId(fileId, fileSize, progress, outputFile);
         } catch (TelegramApiRequestException ex) {
             if (isWrongFileIdException(ex)) {
                 floodWaitController.downloadingFloodWait();
+                //TODO: Идея не понимает что код сюда никогда не дойдет
+                return null;
             } else {
                 throw ex;
             }
         }
     }
 
-    private void downloadWithFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
+    private String downloadWithFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
         floodWaitController.startDownloading(fileId);
         try {
             try {
-                telegramLocalBotApiService.downloadFileByFileId(fileId, fileSize, progress, outputFile);
+                return telegramLocalBotApiService.downloadFileByFileId(fileId, fileSize, progress, outputFile);
             } catch (TelegramApiRequestException ex) {
                 if (isWrongFileIdException(ex)) {
                     floodWaitController.downloadingFloodWait();
+                    //TODO: Идея не понимает что код сюда никогда не дойдет
+                    return null;
                 } else {
                     throw ex;
                 }
