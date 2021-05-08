@@ -80,6 +80,7 @@ public class WorkQueueJob extends WorkQueueJobPusher {
         this.jobsProperties = jobsProperties;
         this.serverProperties = serverProperties;
         this.userTasksService = userTasksService;
+        LOGGER.debug("WorkQueueJob initialized");
     }
 
     @Autowired

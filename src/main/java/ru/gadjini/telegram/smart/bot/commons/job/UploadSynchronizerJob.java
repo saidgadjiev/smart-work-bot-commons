@@ -40,6 +40,7 @@ public class UploadSynchronizerJob {
         this.fileUploader = fileUploader;
         this.workQueueService = queueService;
         this.jobsProperties = jobsProperties;
+        LOGGER.debug("UploadSynchronizerJob initialized");
     }
 
     @Scheduled(fixedDelay = 10 * 1000)

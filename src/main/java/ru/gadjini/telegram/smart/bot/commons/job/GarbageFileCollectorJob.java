@@ -35,6 +35,7 @@ public class GarbageFileCollectorJob {
     public GarbageFileCollectorJob(TempFileService tempFileService, Set<GarbageAlgorithm> algorithms) {
         this.tempFileService = tempFileService;
         this.algorithms = algorithms;
+        LOGGER.debug("GarbageFileCollectorJob initialized");
     }
 
     @Scheduled(cron = "0 0 * * * *")

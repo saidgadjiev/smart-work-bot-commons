@@ -36,6 +36,7 @@ public class DownloadSynchronizerJob {
         this.downloadSynchronizerService = downloadSynchronizerService;
         this.workQueueService = queueService;
         this.jobsProperties = jobsProperties;
+        LOGGER.debug("DownloadSynchronizerJob initialized");
     }
 
     @Scheduled(fixedDelay = 10 * 1000)

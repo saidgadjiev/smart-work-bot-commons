@@ -3,8 +3,10 @@ package ru.gadjini.telegram.smart.bot.commons.job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ru.gadjini.telegram.smart.bot.commons.common.Profiles;
 import ru.gadjini.telegram.smart.bot.commons.dao.WorkQueueDao;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
@@ -17,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
+@Profile({Profiles.PROFILE_PROD_PRIMARY, Profiles.PROFILE_DEV_PRIMARY})
 public class CompletedItemsCleaner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompletedItemsCleaner.class);
@@ -32,6 +35,7 @@ public class CompletedItemsCleaner {
         this.workQueueService = workQueueService;
         this.downloadQueueService = downloadQueueService;
         this.uploadQueueService = uploadQueueService;
+        LOGGER.debug("CompletedItemsCleaner initialized");
     }
 
     @Scheduled(cron = "0 0 * * * *")
