@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.gadjini.telegram.smart.bot.commons.common.Profiles;
+import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.cleaner.GarbageAlgorithm;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
@@ -31,15 +32,22 @@ public class GarbageFileCollectorJob {
 
     private TempFileService tempFileService;
 
+    private JobsProperties jobsProperties;
+
     @Autowired
-    public GarbageFileCollectorJob(TempFileService tempFileService, Set<GarbageAlgorithm> algorithms) {
+    public GarbageFileCollectorJob(TempFileService tempFileService,
+                                   Set<GarbageAlgorithm> algorithms, JobsProperties jobsProperties) {
         this.tempFileService = tempFileService;
         this.algorithms = algorithms;
+        this.jobsProperties = jobsProperties;
         LOGGER.debug("GarbageFileCollectorJob initialized");
     }
 
     @Scheduled(cron = "0 0 * * * *")
     public void run() {
+        if (jobsProperties.isDisableFileCleaners()) {
+            return;
+        }
         LOGGER.debug("Start({})", LocalDateTime.now());
         int clean = clean();
         LOGGER.debug("Finish({}, {})", clean, LocalDateTime.now());

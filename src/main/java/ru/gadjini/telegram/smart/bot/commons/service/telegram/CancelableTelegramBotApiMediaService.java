@@ -105,7 +105,7 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
 
                     if (outputFile != null) {
                         try {
-                            if (!outputFile.getParentFile().mkdirs()) {
+                            if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs()) {
                                 LOGGER.debug("Error mkdirs({})", outputFile.getParentFile().getAbsolutePath());
                             }
                             Files.move(Path.of(filePath), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -113,6 +113,8 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
                             throw new RuntimeException(e);
                         }
                         filePath = outputFile.getAbsolutePath();
+                    } else {
+                        LOGGER.debug("Directly downloaded file may be deleted!({}, {})", filePath, fileId);
                     }
                 } finally {
                     downloadingRequests.remove(fileId);

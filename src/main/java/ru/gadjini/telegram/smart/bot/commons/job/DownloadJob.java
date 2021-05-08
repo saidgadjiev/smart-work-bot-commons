@@ -20,7 +20,9 @@ import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileDownloader;
+import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
+import ru.gadjini.telegram.smart.bot.commons.service.format.FormatService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.DownloadCompleted;
 
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 public class DownloadJob extends WorkQueueJobPusher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadJob.class);
+
+    private static final String TAG = "down";
 
     private DownloadQueueService downloadingQueueService;
 
@@ -57,15 +61,20 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     private JobsProperties jobsProperties;
 
+    private FormatService formatService;
+
     @Value("${available.unused.downloads.count:-1}")
     private int availableUnusedDownloadsCount;
+
+    @Value("${direct.download:false}")
+    private boolean directDownload;
 
     @Autowired
     public DownloadJob(DownloadQueueService downloadingQueueService, FileDownloader fileDownloader,
                        TempFileService tempFileService, FileManagerProperties fileManagerProperties,
                        MediaLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                        ApplicationEventPublisher applicationEventPublisher,
-                       JobsProperties jobsProperties) {
+                       JobsProperties jobsProperties, FormatService formatService) {
         this.downloadingQueueService = downloadingQueueService;
         this.fileDownloader = fileDownloader;
         this.tempFileService = tempFileService;
@@ -74,6 +83,7 @@ public class DownloadJob extends WorkQueueJobPusher {
         this.workQueueDao = workQueueDao;
         this.applicationEventPublisher = applicationEventPublisher;
         this.jobsProperties = jobsProperties;
+        this.formatService = formatService;
     }
 
     @Autowired
@@ -83,7 +93,8 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     @PostConstruct
     public final void init() {
-        LOGGER.debug("Available unused downloads count {}", availableUnusedDownloadsCount);
+        LOGGER.debug("Available unused downloads count({})", availableUnusedDownloadsCount);
+        LOGGER.debug("Direct download({})", directDownload);
         try {
             downloadingQueueService.resetProcessing();
         } catch (Exception ex) {
@@ -157,22 +168,22 @@ public class DownloadJob extends WorkQueueJobPusher {
         downloadingQueueService.releaseResources(deleted);
     }
 
-    public void cancelDownloads(String producer, Set<Integer> producerIds) {
-        deleteDownloads(producer, producerIds);
-    }
-
-    public void deleteDownloads(String producer, Set<Integer> producerIds) {
-        List<DownloadQueueItem> deleted = downloadingQueueService.deleteByProducerIdsWithReturning(producer, producerIds);
-        downloadTasksExecutor.cancel(deleted.stream().map(DownloadQueueItem::getId).collect(Collectors.toList()), true);
-        downloadingQueueService.releaseResources(deleted);
-    }
-
     public void cancelDownloads() {
         downloadTasksExecutor.cancel(currentDownloads.stream().map(DownloadQueueItem::getId).collect(Collectors.toList()), false);
     }
 
     public final void shutdown() {
         downloadTasksExecutor.shutdown();
+    }
+
+    private void cancelDownloads(String producer, Set<Integer> producerIds) {
+        deleteDownloads(producer, producerIds);
+    }
+
+    private void deleteDownloads(String producer, Set<Integer> producerIds) {
+        List<DownloadQueueItem> deleted = downloadingQueueService.deleteByProducerIdsWithReturning(producer, producerIds);
+        downloadTasksExecutor.cancel(deleted.stream().map(DownloadQueueItem::getId).collect(Collectors.toList()), true);
+        downloadingQueueService.releaseResources(deleted);
     }
 
     private class DownloadTask implements SmartExecutorService.Job {
@@ -254,9 +265,7 @@ public class DownloadJob extends WorkQueueJobPusher {
         }
 
         private void doDownloadFile(DownloadQueueItem downloadingQueueItem) {
-            if (StringUtils.isNotBlank(downloadingQueueItem.getFilePath())) {
-                tempFile = new SmartTempFile(new File(downloadingQueueItem.getFilePath()));
-            }
+            tempFile = createOrGetTargetFile();
             try {
                 String filePath = fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
                         getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
@@ -280,6 +289,24 @@ public class DownloadJob extends WorkQueueJobPusher {
                         throw e;
                     }
                 }
+            }
+        }
+
+        private SmartTempFile createOrGetTargetFile() {
+            if (StringUtils.isNotBlank(downloadingQueueItem.getFilePath())) {
+                return new SmartTempFile(new File(downloadingQueueItem.getFilePath()));
+            } else if (directDownload) {
+                return null;
+            } else {
+                String ext;
+                if (downloadingQueueItem.getFile().getFormat() != null) {
+                    ext = downloadingQueueItem.getFile().getFormat().getExt();
+                } else {
+                    ext = formatService.getExt(downloadingQueueItem.getFile().getFileName(), downloadingQueueItem.getFile().getMimeType());
+                }
+
+                return tempFileService.createTempFile(FileTarget.DOWNLOAD, downloadingQueueItem.getUserId(),
+                        downloadingQueueItem.getFile().getFileId(), TAG, ext);
             }
         }
 
