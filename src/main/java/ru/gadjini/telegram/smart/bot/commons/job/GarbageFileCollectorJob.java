@@ -13,6 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.cleaner.GarbageAlgorithm;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,6 +41,11 @@ public class GarbageFileCollectorJob {
         this.tempFileService = tempFileService;
         this.algorithms = algorithms;
         LOGGER.debug("GarbageFileCollectorJob initialized");
+    }
+
+    @PostConstruct
+    public void init() {
+        LOGGER.debug("Disable({})", disable);
     }
 
     @Scheduled(cron = "0 0 * * * *")
