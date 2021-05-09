@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.property.BotProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
-import ru.gadjini.telegram.smart.bot.commons.service.ContentsApi;
 import ru.gadjini.telegram.smart.bot.commons.utils.SmartFileUtils;
 
 import javax.annotation.PostConstruct;
@@ -32,18 +30,11 @@ public class TempFileService {
     @Value("${uploads.temp.dir:#{systemProperties['java.io.tmpdir']}}")
     private String uploadsTempDir;
 
-    private ServerProperties serverProperties;
-
     private BotProperties botProperties;
 
-    private ContentsApi contentApi;
-
     @Autowired
-    public TempFileService(ServerProperties serverProperties,
-                           BotProperties botProperties, ContentsApi contentApi) {
-        this.serverProperties = serverProperties;
+    public TempFileService(BotProperties botProperties) {
         this.botProperties = botProperties;
-        this.contentApi = contentApi;
     }
 
     @PostConstruct
@@ -118,19 +109,11 @@ public class TempFileService {
             return;
         }
         try {
-            if (isRemoteFile(file.getAbsolutePath())) {
-                contentApi.delete(file);
-            }
-
             file.smartDelete();
             LOGGER.debug("Delete({})", file.getAbsolutePath());
         } catch (Throwable e) {
             LOGGER.error("Error delete({}, {})", file.getAbsolutePath(), e.getMessage());
         }
-    }
-
-    private boolean isRemoteFile(String filePath) {
-        return !serverProperties.isPrimaryServer() && filePath.startsWith(downloadsTempDir);
     }
 
     private String mkdirsAndGet(String parent, String child) {
