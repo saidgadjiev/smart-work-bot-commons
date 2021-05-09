@@ -15,7 +15,6 @@ import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.WorkQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.exception.BusyWorkerException;
 import ru.gadjini.telegram.smart.bot.commons.property.FileLimitProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
@@ -66,8 +65,6 @@ public class WorkQueueJob extends WorkQueueJobPusher {
 
     private FileUploadService fileUploadService;
 
-    private JobsProperties jobsProperties;
-
     private ServerProperties serverProperties;
 
     private UserTasksApi userTasksService;
@@ -76,8 +73,7 @@ public class WorkQueueJob extends WorkQueueJobPusher {
     public boolean disableWorkJob;
 
     @Autowired
-    public WorkQueueJob(JobsProperties jobsProperties, ServerProperties serverProperties, UserTasksApi userTasksService) {
-        this.jobsProperties = jobsProperties;
+    public WorkQueueJob(ServerProperties serverProperties, UserTasksApi userTasksService) {
         this.serverProperties = serverProperties;
         this.userTasksService = userTasksService;
         LOGGER.debug("WorkQueueJob initialized");
@@ -140,8 +136,6 @@ public class WorkQueueJob extends WorkQueueJobPusher {
 
     @PostConstruct
     public final void init() {
-        LOGGER.debug("Disable jobs {}", jobsProperties.isDisable());
-        LOGGER.debug("Enable jobs logging {}", jobsProperties.isEnableLogging());
         LOGGER.debug("Disable work job {}", disableWorkJob);
         applicationEventPublisher.publishEvent(new QueueJobInitialization(this));
         try {
@@ -166,12 +160,12 @@ public class WorkQueueJob extends WorkQueueJobPusher {
 
     @Override
     public boolean enableJobsLogging() {
-        return jobsProperties.isEnableLogging();
+        return false;
     }
 
     @Override
     public boolean disableJobs() {
-        return jobsProperties.isDisable();
+        return disableWorkJob;
     }
 
     @Override

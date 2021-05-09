@@ -15,8 +15,7 @@ import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.exception.InvalidMediaMessageException;
 import ru.gadjini.telegram.smart.bot.commons.model.SendFileResult;
 import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploader;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
@@ -41,7 +40,7 @@ public class UploadJob extends WorkQueueJobPusher {
 
     private FileManagerProperties fileManagerProperties;
 
-    private MediaLimitProperties mediaLimitProperties;
+    private DownloadUploadFileLimitProperties mediaLimitProperties;
 
     private WorkQueueDao workQueueDao;
 
@@ -53,21 +52,18 @@ public class UploadJob extends WorkQueueJobPusher {
 
     private final List<UploadQueueItem> currentUploads = new ArrayList<>();
 
-    private JobsProperties jobsProperties;
-
     @Autowired
     public UploadJob(UploadQueueService uploadQueueService,
                      FileManagerProperties fileManagerProperties,
-                     MediaLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
+                     DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                      ApplicationEventPublisher applicationEventPublisher,
-                     FileUploader fileUploader, JobsProperties jobsProperties) {
+                     FileUploader fileUploader) {
         this.uploadQueueService = uploadQueueService;
         this.fileManagerProperties = fileManagerProperties;
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.applicationEventPublisher = applicationEventPublisher;
         this.fileUploader = fileUploader;
-        this.jobsProperties = jobsProperties;
     }
 
     @Autowired
@@ -77,8 +73,6 @@ public class UploadJob extends WorkQueueJobPusher {
 
     @PostConstruct
     public final void init() {
-        LOGGER.debug("Disable jobs {}", jobsProperties.isDisable());
-        LOGGER.debug("Enable jobs logging {}", jobsProperties.isEnableLogging());
         try {
             uploadQueueService.resetProcessing();
         } catch (Exception ex) {
@@ -102,12 +96,12 @@ public class UploadJob extends WorkQueueJobPusher {
 
     @Override
     public boolean enableJobsLogging() {
-        return jobsProperties.isEnableLogging();
+        return false;
     }
 
     @Override
     public boolean disableJobs() {
-        return jobsProperties.isDisable();
+        return false;
     }
 
     @Override

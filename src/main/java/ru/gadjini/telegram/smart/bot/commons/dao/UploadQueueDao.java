@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
-import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
@@ -32,7 +32,7 @@ public class UploadQueueDao extends QueueDao {
 
     private ObjectMapper objectMapper;
 
-    private MediaLimitProperties mediaLimitProperties;
+    private DownloadUploadFileLimitProperties mediaLimitProperties;
 
     private WorkQueueDao workQueueDao;
 
@@ -42,7 +42,7 @@ public class UploadQueueDao extends QueueDao {
 
     @Autowired
     public UploadQueueDao(JdbcTemplate jdbcTemplate, @Qualifier("botapi") Gson gson, ObjectMapper objectMapper,
-                          MediaLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
+                          DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                           UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties) {
         this.jdbcTemplate = jdbcTemplate;
         this.gson = gson;

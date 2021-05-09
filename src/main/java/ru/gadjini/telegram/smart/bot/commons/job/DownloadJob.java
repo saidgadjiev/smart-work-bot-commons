@@ -16,8 +16,7 @@ import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.JobsProperties;
-import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileDownloader;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
@@ -49,7 +48,7 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     private FileManagerProperties fileManagerProperties;
 
-    private MediaLimitProperties mediaLimitProperties;
+    private DownloadUploadFileLimitProperties mediaLimitProperties;
 
     private WorkQueueDao workQueueDao;
 
@@ -58,8 +57,6 @@ public class DownloadJob extends WorkQueueJobPusher {
     private final List<DownloadQueueItem> currentDownloads = new ArrayList<>();
 
     private ApplicationEventPublisher applicationEventPublisher;
-
-    private JobsProperties jobsProperties;
 
     private FormatService formatService;
 
@@ -72,9 +69,9 @@ public class DownloadJob extends WorkQueueJobPusher {
     @Autowired
     public DownloadJob(DownloadQueueService downloadingQueueService, FileDownloader fileDownloader,
                        TempFileService tempFileService, FileManagerProperties fileManagerProperties,
-                       MediaLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
+                       DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                        ApplicationEventPublisher applicationEventPublisher,
-                       JobsProperties jobsProperties, FormatService formatService) {
+                       FormatService formatService) {
         this.downloadingQueueService = downloadingQueueService;
         this.fileDownloader = fileDownloader;
         this.tempFileService = tempFileService;
@@ -82,7 +79,6 @@ public class DownloadJob extends WorkQueueJobPusher {
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.applicationEventPublisher = applicationEventPublisher;
-        this.jobsProperties = jobsProperties;
         this.formatService = formatService;
     }
 
@@ -118,12 +114,12 @@ public class DownloadJob extends WorkQueueJobPusher {
 
     @Override
     public boolean enableJobsLogging() {
-        return jobsProperties.isEnableLogging();
+        return false;
     }
 
     @Override
     public boolean disableJobs() {
-        return jobsProperties.isDisable();
+        return false;
     }
 
     @Override
@@ -137,8 +133,6 @@ public class DownloadJob extends WorkQueueJobPusher {
             long unusedDownloadsCount = downloadingQueueService.unusedDownloadsCount(workQueueDao.getProducerName(), workQueueDao.getQueueName(), weight);
             if (unusedDownloadsCount < availableUnusedDownloadsCount) {
                 return (List<QueueItem>) (Object) downloadingQueueService.poll(workQueueDao.getProducerName(), weight, limit);
-            } else if (jobsProperties.isEnableLogging()) {
-                LOGGER.debug("No available downloads({}, {})", availableUnusedDownloadsCount, unusedDownloadsCount);
             }
         } else {
             return (List<QueueItem>) (Object) downloadingQueueService.poll(workQueueDao.getProducerName(), weight, limit);

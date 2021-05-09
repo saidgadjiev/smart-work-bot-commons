@@ -14,7 +14,7 @@ import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
-import ru.gadjini.telegram.smart.bot.commons.property.MediaLimitProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
@@ -37,7 +37,7 @@ public class DownloadQueueDao extends QueueDao {
 
     private ObjectMapper objectMapper;
 
-    private MediaLimitProperties mediaLimitProperties;
+    private DownloadUploadFileLimitProperties mediaLimitProperties;
 
     private ServerProperties serverProperties;
 
@@ -46,7 +46,7 @@ public class DownloadQueueDao extends QueueDao {
     private Gson gson;
 
     @Autowired
-    public DownloadQueueDao(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper, MediaLimitProperties mediaLimitProperties,
+    public DownloadQueueDao(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper, DownloadUploadFileLimitProperties mediaLimitProperties,
                             ServerProperties serverProperties, WorkQueueDao workQueueDao, Gson gson) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
