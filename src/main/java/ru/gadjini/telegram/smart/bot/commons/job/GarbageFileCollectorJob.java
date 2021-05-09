@@ -32,7 +32,7 @@ public class GarbageFileCollectorJob {
 
     private TempFileService tempFileService;
 
-    @Value("${garbage.file.collector:true}")
+    @Value("${disable.garbage.file.collector:true}")
     private boolean disable;
 
     @Autowired
