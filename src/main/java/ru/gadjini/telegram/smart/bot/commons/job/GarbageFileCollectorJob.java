@@ -45,7 +45,7 @@ public class GarbageFileCollectorJob {
 
     @PostConstruct
     public void init() {
-        LOGGER.debug("Disable({})", disable);
+        LOGGER.debug("Garbage file collector disable({})", disable);
     }
 
     @Scheduled(cron = "0 0 * * * *")
