@@ -1,6 +1,5 @@
 package ru.gadjini.telegram.smart.bot.commons.service.telegram;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.http.client.methods.HttpPost;
@@ -20,6 +19,7 @@ import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.property.BotApiProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.BotProperties;
+import ru.gadjini.telegram.smart.bot.commons.service.Jackson;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.utils.MemoryUtils;
 
@@ -47,7 +47,7 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
 
     private final BotProperties botProperties;
 
-    private ObjectMapper objectMapper;
+    private Jackson jackson;
 
     private Method createHttpRequestMethod;
 
@@ -58,12 +58,12 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
     private TelegramBotApiMethodExecutor exceptionHandler;
 
     @Autowired
-    public CancelableTelegramBotApiMediaService(BotProperties botProperties, ObjectMapper objectMapper,
+    public CancelableTelegramBotApiMediaService(BotProperties botProperties, Jackson jackson,
                                                 DefaultBotOptions botOptions, BotApiProperties botApiProperties, TempFileService tempFileService,
                                                 TelegramBotApiMethodExecutor exceptionHandler) {
-        super(botProperties, objectMapper, botOptions, botApiProperties, exceptionHandler);
+        super(botProperties, botOptions, botApiProperties, exceptionHandler);
         this.botProperties = botProperties;
-        this.objectMapper = objectMapper;
+        this.jackson = jackson;
         this.tempFileService = tempFileService;
         this.exceptionHandler = exceptionHandler;
         try {
@@ -215,7 +215,7 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
             String url = getBaseUrl() + method.getMethod();
             HttpPost httppost = (HttpPost) createHttpRequestMethod.invoke(this, url);
             httppost.addHeader("charset", StandardCharsets.UTF_8.name());
-            httppost.setEntity(new StringEntity(objectMapper.writeValueAsString(method), ContentType.APPLICATION_JSON));
+            httppost.setEntity(new StringEntity(jackson.writeValueAsString(method), ContentType.APPLICATION_JSON));
 
             return httppost;
         } catch (Exception e) {

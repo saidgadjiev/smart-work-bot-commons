@@ -1,9 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,6 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
+import ru.gadjini.telegram.smart.bot.commons.service.Jackson;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 
@@ -35,7 +33,7 @@ public class DownloadQueueDao extends QueueDao {
 
     private JdbcTemplate jdbcTemplate;
 
-    private ObjectMapper objectMapper;
+    private Jackson jackson;
 
     private DownloadUploadFileLimitProperties mediaLimitProperties;
 
@@ -43,17 +41,14 @@ public class DownloadQueueDao extends QueueDao {
 
     private WorkQueueDao workQueueDao;
 
-    private Gson gson;
-
     @Autowired
-    public DownloadQueueDao(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper, DownloadUploadFileLimitProperties mediaLimitProperties,
-                            ServerProperties serverProperties, WorkQueueDao workQueueDao, Gson gson) {
+    public DownloadQueueDao(JdbcTemplate jdbcTemplate, Jackson jackson, DownloadUploadFileLimitProperties mediaLimitProperties,
+                            ServerProperties serverProperties, WorkQueueDao workQueueDao) {
         this.jdbcTemplate = jdbcTemplate;
-        this.objectMapper = objectMapper;
+        this.jackson = jackson;
         this.mediaLimitProperties = mediaLimitProperties;
         this.serverProperties = serverProperties;
         this.workQueueDao = workQueueDao;
-        this.gson = gson;
     }
 
     public void create(DownloadQueueItem queueItem, String synchronizationColumn) {
@@ -67,11 +62,7 @@ public class DownloadQueueDao extends QueueDao {
                     ps.setObject(2, queueItem.getFile().sqlObject());
 
                     ps.setString(3, queueItem.getProducerTable());
-                    try {
-                        ps.setString(4, objectMapper.writeValueAsString(queueItem.getProgress()));
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
+                    ps.setString(4, jackson.writeValueAsString(queueItem.getProgress()));
                     ps.setInt(5, queueItem.getStatus().getCode());
                     if (StringUtils.isNotBlank(queueItem.getFilePath())) {
                         ps.setString(6, queueItem.getFilePath());
@@ -83,7 +74,7 @@ public class DownloadQueueDao extends QueueDao {
                     if (queueItem.getExtra() == null) {
                         ps.setNull(9, Types.VARCHAR);
                     } else {
-                        ps.setString(9, gson.toJson(queueItem.getExtra()));
+                        ps.setString(9, jackson.writeValueAsString(queueItem.getExtra()));
                     }
                     ps.setString(10, queueItem.getProducer());
                     ps.setBoolean(11, queueItem.isSynced());
@@ -263,13 +254,9 @@ public class DownloadQueueDao extends QueueDao {
         }
         String progress = rs.getString(DownloadQueueItem.PROGRESS);
         if (StringUtils.isNotBlank(progress)) {
-            try {
-                item.setProgress(objectMapper.readValue(progress, Progress.class));
-            } catch (JsonProcessingException e) {
-                throw new SQLException(e);
-            }
+            item.setProgress(jackson.readValue(progress, Progress.class));
         }
-        item.setExtra(gson.fromJson(rs.getString(DownloadQueueItem.EXTRA), JsonElement.class));
+        item.setExtra(jackson.readValue(rs.getString(DownloadQueueItem.EXTRA), JsonNode.class));
 
         return item;
     }

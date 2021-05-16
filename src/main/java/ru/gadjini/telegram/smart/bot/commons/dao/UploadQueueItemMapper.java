@@ -1,9 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,6 +9,7 @@ import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
+import ru.gadjini.telegram.smart.bot.commons.service.Jackson;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 import ru.gadjini.telegram.smart.bot.commons.utils.JdbcUtils;
 
@@ -25,14 +23,11 @@ import java.util.Set;
 @Component
 public class UploadQueueItemMapper {
 
-    private Gson gson;
-
-    private ObjectMapper objectMapper;
+    private Jackson jackson;
 
     @Autowired
-    public UploadQueueItemMapper(Gson gson, ObjectMapper objectMapper) {
-        this.gson = gson;
-        this.objectMapper = objectMapper;
+    public UploadQueueItemMapper(Jackson jackson) {
+        this.jackson = jackson;
     }
 
     public UploadQueueItem map(ResultSet rs) throws SQLException {
@@ -51,15 +46,11 @@ public class UploadQueueItemMapper {
         }
         String progress = rs.getString(UploadQueueItem.PROGRESS);
         if (StringUtils.isNotBlank(progress)) {
-            try {
-                item.setProgress(objectMapper.readValue(progress, Progress.class));
-            } catch (JsonProcessingException e) {
-                throw new SQLException(e);
-            }
+            item.setProgress(jackson.readValue(progress, Progress.class));
         }
         String extra = rs.getString(UploadQueueItem.EXTRA);
         if (StringUtils.isNotBlank(extra)) {
-            item.setExtra(gson.fromJson(extra, JsonElement.class));
+            item.setExtra(jackson.readValue(extra, JsonNode.class));
         }
         Set<String> columns = JdbcUtils.getColumnNames(rs.getMetaData());
         if (columns.contains(UploadQueueItem.UPLOAD_TYPE)) {
@@ -84,15 +75,15 @@ public class UploadQueueItemMapper {
     public Object deserializeBody(String method, String body) {
         switch (method) {
             case SendDocument.PATH:
-                return gson.fromJson(body, SendDocument.class);
+                return jackson.readValue(body, SendDocument.class);
             case SendAudio.PATH:
-                return gson.fromJson(body, SendAudio.class);
+                return jackson.readValue(body, SendAudio.class);
             case SendVideo.PATH:
-                return gson.fromJson(body, SendVideo.class);
+                return jackson.readValue(body, SendVideo.class);
             case SendVoice.PATH:
-                return gson.fromJson(body, SendVoice.class);
+                return jackson.readValue(body, SendVoice.class);
             case SendSticker.PATH:
-                return gson.fromJson(body, SendSticker.class);
+                return jackson.readValue(body, SendSticker.class);
         }
 
         throw new IllegalArgumentException("Unsupported method " + method);

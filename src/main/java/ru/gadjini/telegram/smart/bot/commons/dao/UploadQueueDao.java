@@ -1,11 +1,7 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
@@ -14,6 +10,7 @@ import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
 import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
+import ru.gadjini.telegram.smart.bot.commons.service.Jackson;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 
@@ -28,9 +25,7 @@ public class UploadQueueDao extends QueueDao {
 
     private JdbcTemplate jdbcTemplate;
 
-    private Gson gson;
-
-    private ObjectMapper objectMapper;
+    private Jackson jackson;
 
     private DownloadUploadFileLimitProperties mediaLimitProperties;
 
@@ -41,12 +36,11 @@ public class UploadQueueDao extends QueueDao {
     private ServerProperties serverProperties;
 
     @Autowired
-    public UploadQueueDao(JdbcTemplate jdbcTemplate, @Qualifier("botapi") Gson gson, ObjectMapper objectMapper,
+    public UploadQueueDao(JdbcTemplate jdbcTemplate, Jackson jackson,
                           DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                           UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties) {
         this.jdbcTemplate = jdbcTemplate;
-        this.gson = gson;
-        this.objectMapper = objectMapper;
+        this.jackson = jackson;
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.queueItemMapper = queueItemMapper;
@@ -63,17 +57,13 @@ public class UploadQueueDao extends QueueDao {
                             "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
                     ps.setInt(1, queueItem.getUserId());
                     ps.setString(2, queueItem.getMethod());
-                    ps.setString(3, gson.toJson(queueItem.getBody()));
+                    ps.setString(3, jackson.writeValueAsString(queueItem.getBody()));
                     ps.setString(4, queueItem.getProducerTable());
-                    try {
-                        ps.setString(5, objectMapper.writeValueAsString(queueItem.getProgress()));
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
+                    ps.setString(5, jackson.writeValueAsString(queueItem.getProgress()));
                     ps.setInt(6, queueItem.getStatus().getCode());
                     ps.setInt(7, queueItem.getProducerId());
                     if (queueItem.getExtra() != null) {
-                        ps.setString(8, gson.toJson(queueItem.getExtra()));
+                        ps.setString(8, jackson.writeValueAsString(queueItem.getExtra()));
                     } else {
                         ps.setNull(8, Types.VARCHAR);
                     }
