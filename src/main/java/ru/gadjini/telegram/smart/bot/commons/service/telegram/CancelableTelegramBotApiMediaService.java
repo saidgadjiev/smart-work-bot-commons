@@ -22,6 +22,7 @@ import ru.gadjini.telegram.smart.bot.commons.property.BotProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.Jackson;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.utils.MemoryUtils;
+import ru.gadjini.telegram.smart.bot.commons.utils.NetSpeedUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -81,13 +82,13 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
         if (outputFile != null) {
             downloading.put(fileId, outputFile);
         }
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        AtomicLong resultFileSize = new AtomicLong(fileSize);
         try {
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start();
             LOGGER.debug("Start downloadFileByFileId({}, {})", fileId, MemoryUtils.humanReadableByteCount(fileSize));
 
-            AtomicLong resultFileSize = new AtomicLong();
-            String resultFilePath = exceptionHandler.executeWithResult(null, () -> {
+            return exceptionHandler.executeWithResult(null, () -> {
                 updateProgressBeforeStart(progress);
                 GetFile gf = new GetFile();
                 gf.setFileId(fileId);
@@ -121,19 +122,21 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
                 }
                 updateProgressAfterComplete(progress);
 
+                LOGGER.debug("Finished successfully downloadFileByFileId({}, {})", fileId,
+                        MemoryUtils.humanReadableByteCount(resultFileSize.get()));
+
                 return filePath;
             });
-
-            stopWatch.stop();
-            LOGGER.debug("Finish downloadFileByFileId({}, {}, {})", fileId,
-                    MemoryUtils.humanReadableByteCount(resultFileSize.get()), stopWatch.getTime(TimeUnit.SECONDS));
-
-            return resultFilePath;
         } catch (TelegramApiException | FloodWaitException e) {
             LOGGER.error(e.getMessage() + "({}, {})", fileId, MemoryUtils.humanReadableByteCount(fileSize));
             throw e;
         } finally {
             downloading.remove(fileId);
+            stopWatch.stop();
+            long time = stopWatch.getTime(TimeUnit.SECONDS);
+            LOGGER.debug("Finish downloadFileByFileId({}, {}, {}, {})", fileId,
+                    MemoryUtils.humanReadableByteCount(resultFileSize.get()), time,
+                    NetSpeedUtils.toSpeed(resultFileSize.get() / Math.max(1, time)));
         }
     }
 
