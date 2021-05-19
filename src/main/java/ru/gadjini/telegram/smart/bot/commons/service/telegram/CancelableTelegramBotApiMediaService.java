@@ -2,12 +2,14 @@ package ru.gadjini.telegram.smart.bot.commons.service.telegram;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
@@ -50,26 +52,27 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
 
     private Jackson jackson;
 
-    private Method createHttpRequestMethod;
-
     private Method sendHttpPostRequestMethod;
 
     private TempFileService tempFileService;
 
     private TelegramBotApiMethodExecutor exceptionHandler;
 
+    private RequestConfig downloadRequestConfig;
+
     @Autowired
     public CancelableTelegramBotApiMediaService(BotProperties botProperties, Jackson jackson,
-                                                DefaultBotOptions botOptions, BotApiProperties botApiProperties, TempFileService tempFileService,
-                                                TelegramBotApiMethodExecutor exceptionHandler) {
+                                                DefaultBotOptions botOptions, BotApiProperties botApiProperties,
+                                                TempFileService tempFileService,
+                                                TelegramBotApiMethodExecutor exceptionHandler,
+                                                @Qualifier("downloadRequestConfig") RequestConfig downloadRequestConfig) {
         super(botProperties, botOptions, botApiProperties, exceptionHandler);
         this.botProperties = botProperties;
         this.jackson = jackson;
         this.tempFileService = tempFileService;
         this.exceptionHandler = exceptionHandler;
+        this.downloadRequestConfig = downloadRequestConfig;
         try {
-            this.createHttpRequestMethod = DefaultAbsSender.class.getDeclaredMethod("configuredHttpPost", String.class);
-            this.createHttpRequestMethod.setAccessible(true);
             this.sendHttpPostRequestMethod = DefaultAbsSender.class.getDeclaredMethod("sendHttpPostRequest", HttpPost.class);
             this.sendHttpPostRequestMethod.setAccessible(true);
         } catch (NoSuchMethodException e) {
@@ -216,7 +219,8 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
         try {
             method.validate();
             String url = getBaseUrl() + method.getMethod();
-            HttpPost httppost = (HttpPost) createHttpRequestMethod.invoke(this, url);
+            HttpPost httppost = new HttpPost(url);
+            httppost.setConfig(downloadRequestConfig);
             httppost.addHeader("charset", StandardCharsets.UTF_8.name());
             httppost.setEntity(new StringEntity(jackson.writeValueAsString(method), ContentType.APPLICATION_JSON));
 
