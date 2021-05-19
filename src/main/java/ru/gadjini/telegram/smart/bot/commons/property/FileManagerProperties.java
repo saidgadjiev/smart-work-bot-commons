@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("file.manager")
 public class FileManagerProperties {
 
-    private long sleepTimeBeforeDownloadAttempt = 90;
+    private long sleepTimeBeforeDownloadAttempt = 60;
 
     private long sleepTimeBeforeUploadAttempt = 60;
 
