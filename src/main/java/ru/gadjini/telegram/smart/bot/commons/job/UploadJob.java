@@ -58,6 +58,7 @@ public class UploadJob extends WorkQueueJobPusher {
                      DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                      ApplicationEventPublisher applicationEventPublisher,
                      FileUploader fileUploader) {
+        super(true);
         this.uploadQueueService = uploadQueueService;
         this.fileManagerProperties = fileManagerProperties;
         this.mediaLimitProperties = mediaLimitProperties;

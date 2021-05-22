@@ -74,6 +74,7 @@ public class WorkQueueJob extends WorkQueueJobPusher {
 
     @Autowired
     public WorkQueueJob(ServerProperties serverProperties, UserTasksApi userTasksService) {
+        super(false);
         this.serverProperties = serverProperties;
         this.userTasksService = userTasksService;
         LOGGER.debug("WorkQueueJob initialized");

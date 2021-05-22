@@ -72,6 +72,7 @@ public class DownloadJob extends WorkQueueJobPusher {
                        DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                        ApplicationEventPublisher applicationEventPublisher,
                        FormatService formatService) {
+        super(true);
         this.downloadingQueueService = downloadingQueueService;
         this.fileDownloader = fileDownloader;
         this.tempFileService = tempFileService;
