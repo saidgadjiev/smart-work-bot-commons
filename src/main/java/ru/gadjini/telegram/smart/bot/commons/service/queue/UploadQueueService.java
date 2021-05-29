@@ -154,6 +154,12 @@ public class UploadQueueService extends QueueService {
                 inputFile = sendSticker.getSticker();
                 break;
             }
+            case SendVideoNote.PATH: {
+                SendVideoNote sendVideoNote = (SendVideoNote) uploadQueueItem.getBody();
+                inputFile = sendVideoNote.getVideoNote();
+                thumb = sendVideoNote.getThumb();
+                break;
+            }
         }
 
         if (inputFile != null && inputFile.isNew()) {

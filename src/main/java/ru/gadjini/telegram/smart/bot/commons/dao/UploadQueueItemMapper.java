@@ -84,6 +84,8 @@ public class UploadQueueItemMapper {
                 return jackson.readValue(body, SendVoice.class);
             case SendSticker.PATH:
                 return jackson.readValue(body, SendSticker.class);
+            case SendVideoNote.PATH:
+                return jackson.readValue(body, SendVideoNote.class);
         }
 
         throw new IllegalArgumentException("Unsupported method " + method);

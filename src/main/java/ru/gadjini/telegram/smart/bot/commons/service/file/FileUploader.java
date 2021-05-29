@@ -96,6 +96,11 @@ public class FileUploader {
                 inputFile = sendSticker.getSticker();
                 break;
             }
+            case SendVideoNote.PATH: {
+                SendVideoNote sendVideoNote = (SendVideoNote) body;
+                inputFile = sendVideoNote.getVideoNote();
+                break;
+            }
         }
         if (inputFile == null) {
             throw new IllegalArgumentException("Null input file " + body);
@@ -145,6 +150,10 @@ public class FileUploader {
             case SendSticker.PATH: {
                 SendSticker sendSticker = (SendSticker) body;
                 return mediaMessageService.sendSticker(sendSticker, progress);
+            }
+            case SendVideoNote.PATH: {
+                SendVideoNote sendVideoNote = (SendVideoNote) body;
+                return mediaMessageService.sendVideoNote(sendVideoNote, progress);
             }
         }
 
