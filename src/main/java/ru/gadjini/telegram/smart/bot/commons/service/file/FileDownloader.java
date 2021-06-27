@@ -13,6 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegram
 
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.file.NoSuchFileException;
 import java.util.Objects;
 
 @Service
@@ -68,13 +69,14 @@ public class FileDownloader {
         int indexOfNoResponseException = ExceptionUtils.indexOfThrowable(ex, NoHttpResponseException.class);
         int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
         int socketTimeOutException = ExceptionUtils.indexOfThrowable(ex, SocketTimeoutException.class);
+        int noSuchFileException = ExceptionUtils.indexOfThrowable(ex, NoSuchFileException.class);
         boolean restart500 = false;
         if (StringUtils.isNotBlank(ex.getMessage())) {
             restart500 = ex.getMessage().contains("Internal Server Error: restart");
         }
 
         return indexOfNoResponseException != -1 || socketException != -1
-                || socketTimeOutException != -1 || restart500;
+                || socketTimeOutException != -1 || restart500 || noSuchFileException != -1;
     }
 
     private String downloadWithoutFloodControl(String fileId, long fileSize, Progress progress, SmartTempFile outputFile) {
