@@ -3,6 +3,7 @@ package ru.gadjini.telegram.smart.bot.commons.service.file;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.gadjini.telegram.smart.bot.commons.dao.WorkQueueDao;
+import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.job.DownloadJob;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
@@ -35,7 +36,11 @@ public class FileDownloadService {
     }
 
     public void createDownloads(Collection<TgFile> files, int producerId, int userId, Object extra) {
-        queueService.create(files, workQueueDao.getQueueName(), workQueueDao.getProducerName(), producerId, userId, extra);
+        queueService.create(files, QueueItem.Status.WAITING, workQueueDao.getQueueName(), workQueueDao.getProducerName(), producerId, userId, extra);
+    }
+
+    public void createCompletedDownloads(Collection<TgFile> files, int producerId, int userId, Object extra) {
+        queueService.create(files, QueueItem.Status.COMPLETED, workQueueDao.getQueueName(), workQueueDao.getProducerName(), producerId, userId, extra);
     }
 
     public void createDownload(TgFile file, int producerId, int userId) {
