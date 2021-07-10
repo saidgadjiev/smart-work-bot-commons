@@ -44,7 +44,7 @@ public class UploadQueueService extends QueueService {
         this.fileUploader = fileUploader;
     }
 
-    public UploadQueueItem createUpload(int userId, String method, Object body, Format fileFormat,
+    public UploadQueueItem createUpload(long userId, String method, Object body, Format fileFormat,
                                         Progress progress, String producerTable, String producer,
                                         int producerId, QueueItem.Status status, Object extra) {
         UploadQueueItem uploadQueueItem = new UploadQueueItem();
@@ -94,7 +94,7 @@ public class UploadQueueService extends QueueService {
         return uploadQueueDao.deleteOrphan(producer, producerTable);
     }
 
-    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, long userId) {
         return uploadQueueDao.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
     }
 

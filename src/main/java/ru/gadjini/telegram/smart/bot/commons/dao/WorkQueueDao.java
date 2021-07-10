@@ -40,7 +40,7 @@ public class WorkQueueDao extends QueueDao {
         return queueDaoDelegate.getById(id);
     }
 
-    public List<QueueItem> deleteAndGetProcessingOrWaitingByUserId(int userId) {
+    public List<QueueItem> deleteAndGetProcessingOrWaitingByUserId(long userId) {
         return queueDaoDelegate.deleteAndGetProcessingOrWaitingByUserId(userId);
     }
 

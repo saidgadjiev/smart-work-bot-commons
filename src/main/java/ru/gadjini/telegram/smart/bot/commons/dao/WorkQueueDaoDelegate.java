@@ -20,7 +20,7 @@ public interface WorkQueueDaoDelegate<T extends QueueItem> extends QueueDaoDeleg
         return null;
     }
 
-    default List<T> deleteAndGetProcessingOrWaitingByUserId(int userId) {
+    default List<T> deleteAndGetProcessingOrWaitingByUserId(long userId) {
         return Collections.emptyList();
     }
 

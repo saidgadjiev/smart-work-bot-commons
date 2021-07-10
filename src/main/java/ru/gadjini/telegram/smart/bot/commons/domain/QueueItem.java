@@ -34,7 +34,7 @@ public class QueueItem {
 
     private int id;
 
-    private int userId;
+    private long userId;
 
     private Integer replyToMessageId;
 
@@ -68,11 +68,11 @@ public class QueueItem {
         this.id = id;
     }
 
-    public final int getUserId() {
+    public final long getUserId() {
         return userId;
     }
 
-    public final void setUserId(int userId) {
+    public final void setUserId(long userId) {
         this.userId = userId;
     }
 

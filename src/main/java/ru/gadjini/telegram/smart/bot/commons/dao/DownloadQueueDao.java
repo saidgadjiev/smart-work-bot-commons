@@ -57,7 +57,7 @@ public class DownloadQueueDao extends QueueDao {
                         "delete_parent_dir, producer_id, extra, producer, " + synchronizationColumn + ")\n" +
                         "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 ps -> {
-                    ps.setInt(1, queueItem.getUserId());
+                    ps.setLong(1, queueItem.getUserId());
 
                     ps.setObject(2, queueItem.getFile().sqlObject());
 
@@ -165,13 +165,13 @@ public class DownloadQueueDao extends QueueDao {
         );
     }
 
-    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, long userId) {
         return jdbcTemplate.query("DELETE\n" +
                         "FROM " + DownloadQueueItem.NAME + "\n" +
                         "WHERE producer = ? AND user_id = ? AND status IN(0, 1) RETURNING *, (file).*",
                 ps -> {
                     ps.setString(1, producer);
-                    ps.setInt(2, userId);
+                    ps.setLong(2, userId);
                 },
                 (rs, rowNum) -> map(rs)
         );

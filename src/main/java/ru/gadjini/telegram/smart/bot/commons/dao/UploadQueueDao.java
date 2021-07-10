@@ -55,7 +55,7 @@ public class UploadQueueDao extends QueueDao {
                             "(user_id, method, body, producer_table, progress, status, " +
                             "producer_id, extra, file_size, producer, file_format, upload_type, synced)\n" +
                             "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-                    ps.setInt(1, queueItem.getUserId());
+                    ps.setLong(1, queueItem.getUserId());
                     ps.setString(2, queueItem.getMethod());
                     ps.setString(3, jackson.writeValueAsString(queueItem.getBody()));
                     ps.setString(4, queueItem.getProducerTable());
@@ -97,12 +97,12 @@ public class UploadQueueDao extends QueueDao {
         );
     }
 
-    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+    public List<UploadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, long userId) {
         return jdbcTemplate.query("DELETE FROM " + UploadQueueItem.NAME + " WHERE producer = ? AND user_id = ? " +
                         "AND status IN(0,1) RETURNING *",
                 ps -> {
                     ps.setString(1, producer);
-                    ps.setInt(2, userId);
+                    ps.setLong(2, userId);
                 },
                 (rs, rowNum) -> map(rs)
         );

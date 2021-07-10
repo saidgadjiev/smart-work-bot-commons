@@ -27,7 +27,7 @@ public class WorkQueueService extends QueueService {
         return queueDao.getById(id);
     }
 
-    public List<QueueItem> deleteAndGetProcessingOrWaitingByUserId(int userId) {
+    public List<QueueItem> deleteAndGetProcessingOrWaitingByUserId(long userId) {
         return queueDao.deleteAndGetProcessingOrWaitingByUserId(userId);
     }
 

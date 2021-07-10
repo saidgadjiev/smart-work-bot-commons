@@ -31,23 +31,23 @@ public class FileDownloadService {
         this.downloadingJob = downloadingJob;
     }
 
-    public void createDownload(TgFile file, int producerId, int userId, Object extra) {
+    public void createDownload(TgFile file, int producerId, long userId, Object extra) {
         createDownloads(Collections.singletonList(file), producerId, userId, extra);
     }
 
-    public void createDownloads(Collection<TgFile> files, int producerId, int userId, Object extra) {
+    public void createDownloads(Collection<TgFile> files, int producerId, long userId, Object extra) {
         queueService.create(files, QueueItem.Status.WAITING, workQueueDao.getQueueName(), workQueueDao.getProducerName(), producerId, userId, extra);
     }
 
-    public void createCompletedDownloads(Collection<TgFile> files, int producerId, int userId, Object extra) {
+    public void createCompletedDownloads(Collection<TgFile> files, int producerId, long userId, Object extra) {
         queueService.create(files, QueueItem.Status.COMPLETED, workQueueDao.getQueueName(), workQueueDao.getProducerName(), producerId, userId, extra);
     }
 
-    public void createDownload(TgFile file, int producerId, int userId) {
+    public void createDownload(TgFile file, int producerId, long userId) {
         createDownloads(Collections.singletonList(file), producerId, userId, null);
     }
 
-    public void createDownloads(Collection<TgFile> files, int producerId, int userId) {
+    public void createDownloads(Collection<TgFile> files, int producerId, long userId) {
         createDownloads(files, producerId, userId, null);
     }
 
@@ -59,7 +59,7 @@ public class FileDownloadService {
         downloadingJob.cancelProcessingOrWaitingDownloads(workQueueDao.getProducerName(), producerId);
     }
 
-    public void cancelDownloadsByUserId(int userId) {
+    public void cancelDownloadsByUserId(long userId) {
         downloadingJob.cancelDownloadsByUserId(workQueueDao.getProducerName(), userId);
     }
 

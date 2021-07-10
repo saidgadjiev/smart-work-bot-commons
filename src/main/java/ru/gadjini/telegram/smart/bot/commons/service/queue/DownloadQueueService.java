@@ -45,7 +45,7 @@ public class DownloadQueueService extends QueueService {
     }
 
     @Transactional
-    public void create(Collection<TgFile> files, QueueItem.Status status, String producerTable, String producer, int producerId, int userId, Object extra) {
+    public void create(Collection<TgFile> files, QueueItem.Status status, String producerTable, String producer, int producerId, long userId, Object extra) {
         for (TgFile file : files) {
             DownloadQueueItem queueItem = new DownloadQueueItem();
             queueItem.setFile(file);
@@ -109,7 +109,7 @@ public class DownloadQueueService extends QueueService {
         return downloadingQueueDao.countFloodWaits();
     }
 
-    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, int userId) {
+    public List<DownloadQueueItem> deleteAndGetProcessingOrWaitingByUserId(String producer, long userId) {
         return downloadingQueueDao.deleteAndGetProcessingOrWaitingByUserId(producer, userId);
     }
 

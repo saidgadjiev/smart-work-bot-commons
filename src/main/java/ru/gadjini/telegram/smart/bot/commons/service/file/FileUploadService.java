@@ -64,7 +64,7 @@ public class FileUploadService {
         uploadQueueService.updateStatus(uploadId, QueueItem.Status.WAITING, QueueItem.Status.BLOCKED);
     }
 
-    public void createUpload(int userId, String method, Object body, Format fileFormat, Progress progress, int producerId, Object extra) {
+    public void createUpload(long userId, String method, Object body, Format fileFormat, Progress progress, int producerId, Object extra) {
         if (isSmartFile(userId)) {
             UploadQueueItem upload = uploadQueueService.createUpload(userId, method, body, fileFormat, progress, workQueueDao.getQueueName(),
                     workQueueDao.getProducerName(), producerId, QueueItem.Status.BLOCKED, extra);
@@ -75,11 +75,11 @@ public class FileUploadService {
         }
     }
 
-    public void createUpload(int userId, String method, Object body, Progress progress, int producerId) {
+    public void createUpload(long userId, String method, Object body, Progress progress, int producerId) {
         createUpload(userId, method, body, null, progress, producerId, null);
     }
 
-    public void createUpload(int userId, String method, Object body, Format fileFormat, Progress progress, int producerId) {
+    public void createUpload(long userId, String method, Object body, Format fileFormat, Progress progress, int producerId) {
         createUpload(userId, method, body, fileFormat, progress, producerId, null);
     }
 
@@ -95,7 +95,7 @@ public class FileUploadService {
         uploadJob.cancelUploads(workQueueDao.getProducerName(), producerIds);
     }
 
-    public void cancelUploadsByUserId(int userId) {
+    public void cancelUploadsByUserId(long userId) {
         uploadJob.cancelUploadsByUserId(workQueueDao.getProducerName(), userId);
     }
 
@@ -103,7 +103,7 @@ public class FileUploadService {
         uploadJob.cancelUploads();
     }
 
-    private boolean isSmartFile(int userId) {
+    private boolean isSmartFile(long userId) {
         return userSettingsService.isSmartFileFeatureEnabled(userId);
     }
 
