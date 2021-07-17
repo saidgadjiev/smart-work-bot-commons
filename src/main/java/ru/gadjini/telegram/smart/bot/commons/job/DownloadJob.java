@@ -15,12 +15,14 @@ import ru.gadjini.telegram.smart.bot.commons.exception.FloodControlException;
 import ru.gadjini.telegram.smart.bot.commons.exception.FloodWaitException;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
-import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
+import ru.gadjini.telegram.smart.bot.commons.service.RemoteFileDownloader;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileDownloader;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
+import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 import ru.gadjini.telegram.smart.bot.commons.service.format.FormatService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.DownloadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.event.DownloadCompleted;
@@ -39,6 +41,8 @@ public class DownloadJob extends WorkQueueJobPusher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadJob.class);
 
     private static final String TAG = "down";
+
+    private RemoteFileDownloader remoteFileDownloader;
 
     private DownloadQueueService downloadingQueueService;
 
@@ -67,12 +71,13 @@ public class DownloadJob extends WorkQueueJobPusher {
     private boolean directDownload;
 
     @Autowired
-    public DownloadJob(DownloadQueueService downloadingQueueService, FileDownloader fileDownloader,
+    public DownloadJob(RemoteFileDownloader remoteFileDownloader, DownloadQueueService downloadingQueueService, FileDownloader fileDownloader,
                        TempFileService tempFileService, FileManagerProperties fileManagerProperties,
                        DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                        ApplicationEventPublisher applicationEventPublisher,
                        FormatService formatService) {
         super(true);
+        this.remoteFileDownloader = remoteFileDownloader;
         this.downloadingQueueService = downloadingQueueService;
         this.fileDownloader = fileDownloader;
         this.tempFileService = tempFileService;
@@ -262,8 +267,14 @@ public class DownloadJob extends WorkQueueJobPusher {
         private void doDownloadFile(DownloadQueueItem downloadingQueueItem) {
             tempFile = createOrGetTargetFile();
             try {
-                String filePath = fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
-                        getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
+                String filePath;
+                Format format = formatService.getFormat(downloadingQueueItem.getFile().getFileId());
+                if (Format.URL.equals(format)) {
+                    filePath = remoteFileDownloader.download(downloadingQueueItem.getFile().getFileId(), tempFile, getProgress());
+                } else {
+                    filePath = fileDownloader.downloadFileByFileId(downloadingQueueItem.getFile().getFileId(), downloadingQueueItem.getFile().getSize(),
+                            getProgress(), tempFile, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
+                }
 
                 downloadingQueueService.setCompleted(downloadingQueueItem.getId(), filePath);
                 downloadingQueueItem.setFilePath(filePath);

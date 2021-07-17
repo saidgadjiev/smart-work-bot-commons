@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
+import ru.gadjini.telegram.smart.bot.commons.utils.UrlUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,6 +115,11 @@ public class TempDirectoryService {
         tag = StringUtils.defaultIfBlank(tag, "-");
         ext = StringUtils.defaultIfBlank(ext, "tmp");
         fileId = StringUtils.defaultIfBlank(fileId, "-");
+
+        if (UrlUtils.isUrl(fileId)) {
+            fileId = "url";
+        }
+
         long n = RANDOM.nextLong();
 
         return "tag_" + tag + "_chatId_" + chatId + "_fileId_" + fileId + "_time_" + System.nanoTime() + "_salt_" + Long.toUnsignedString(n) + "." + ext;
