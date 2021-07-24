@@ -2,6 +2,7 @@ package ru.gadjini.telegram.smart.bot.commons.command.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import ru.gadjini.telegram.smart.bot.commons.command.api.CallbackBotCommand;
@@ -16,7 +17,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
 
 import java.util.Locale;
 
-//@Component
+@Component
 public class DoSmartUploadCommand implements CallbackBotCommand {
 
     private FileUploadService fileUploadService;

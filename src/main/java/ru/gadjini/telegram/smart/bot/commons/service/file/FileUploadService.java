@@ -13,7 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.job.UploadJob;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
-import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartUploadKeyboardService;
+import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartUploadMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
@@ -31,7 +31,7 @@ public class FileUploadService {
 
     private WorkQueueDao workQueueDao;
 
-    private SmartUploadKeyboardService smartKeyboardService;
+    private SmartFileInlineKeyboardService smartKeyboardService;
 
     private SmartUploadMessageBuilder smartUploadMessageBuilder;
 
@@ -43,7 +43,7 @@ public class FileUploadService {
 
     @Autowired
     public FileUploadService(UploadQueueService uploadQueueService,
-                             WorkQueueDao workQueueDao, SmartUploadKeyboardService smartKeyboardService,
+                             WorkQueueDao workQueueDao, SmartFileInlineKeyboardService smartKeyboardService,
                              SmartUploadMessageBuilder smartUploadMessageBuilder, @Qualifier("messageLimits") MessageService messageService,
                              UserService userService, UserSettingsService userSettingsService) {
         this.uploadQueueService = uploadQueueService;
@@ -61,7 +61,7 @@ public class FileUploadService {
     }
 
     public void uploadSmartFile(int uploadId) {
-        uploadQueueService.updateStatus(uploadId, QueueItem.Status.WAITING, QueueItem.Status.BLOCKED);
+        uploadQueueService.updateStatus(uploadId, QueueItem.Status.WAITING);
     }
 
     public void createUpload(long userId, String method, Object body, Format fileFormat, Progress progress, int producerId, Object extra) {
@@ -112,7 +112,7 @@ public class FileUploadService {
         InlineKeyboardMarkup smartKeyboard = smartKeyboardService.getSmartUploadKeyboard(uploadQueueItem.getId(), locale);
         messageService.sendMessage(
                 SendMessage.builder().chatId(String.valueOf(uploadQueueItem.getUserId()))
-                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(uploadQueueItem, locale))
+                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(locale))
                         .parseMode(ParseMode.HTML)
                         .replyMarkup(smartKeyboard)
                         .build()

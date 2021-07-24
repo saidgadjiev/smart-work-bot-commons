@@ -1,10 +1,14 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
@@ -35,16 +39,19 @@ public class UploadQueueDao extends QueueDao {
 
     private ServerProperties serverProperties;
 
+    private ObjectMapper objectMapper;
+
     @Autowired
     public UploadQueueDao(JdbcTemplate jdbcTemplate, Jackson jackson,
                           DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
-                          UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties) {
+                          UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties, ObjectMapper objectMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.jackson = jackson;
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.queueItemMapper = queueItemMapper;
         this.serverProperties = serverProperties;
+        this.objectMapper = objectMapper;
     }
 
     public void create(UploadQueueItem queueItem) {
@@ -54,18 +61,21 @@ public class UploadQueueDao extends QueueDao {
                     PreparedStatement ps = con.prepareStatement("INSERT INTO upload_queue " +
                             "(user_id, method, body, producer_table, progress, status, " +
                             "producer_id, extra, file_size, producer, file_format, upload_type, synced)\n" +
-                            "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+                            "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id", Statement.RETURN_GENERATED_KEYS);
                     ps.setLong(1, queueItem.getUserId());
                     ps.setString(2, queueItem.getMethod());
-                    ps.setString(3, jackson.writeValueAsString(queueItem.getBody()));
+                    PGobject pGobject = new PGobject();
+                    pGobject.setType("jsonb");
+                    pGobject.setValue(jackson.writeValueAsString(queueItem.getBody()));
+                    ps.setObject(3, pGobject);
                     ps.setString(4, queueItem.getProducerTable());
                     ps.setString(5, jackson.writeValueAsString(queueItem.getProgress()));
                     ps.setInt(6, queueItem.getStatus().getCode());
                     ps.setInt(7, queueItem.getProducerId());
                     if (queueItem.getExtra() != null) {
-                        ps.setString(8, jackson.writeValueAsString(queueItem.getExtra()));
+                        ps.setObject(8, jackson.writeValueAsString(queueItem.getExtra()));
                     } else {
-                        ps.setNull(8, Types.VARCHAR);
+                        ps.setNull(8, Types.OTHER);
                     }
                     ps.setLong(9, queueItem.getFileSize());
                     ps.setString(10, queueItem.getProducer());
@@ -145,14 +155,42 @@ public class UploadQueueDao extends QueueDao {
         );
     }
 
-    public void updateStatus(int id, QueueItem.Status newStatus, QueueItem.Status oldStatus) {
+    public void updateStatus(int id, QueueItem.Status newStatus) {
         jdbcTemplate.update(
-                "UPDATE upload_queue SET status = ? WHERE id = ? AND status = ?",
+                "UPDATE upload_queue SET status = ? WHERE id = ?",
                 ps -> {
                     ps.setInt(1, newStatus.getCode());
                     ps.setInt(2, id);
-                    ps.setInt(3, oldStatus.getCode());
                 }
+        );
+    }
+
+    public int updateCaption(int id, String caption) {
+        return jdbcTemplate.update(
+                "update upload_queue set body = body || '{\"caption\": \"" + caption + "\"}'::jsonb where id = ?",
+                ps -> {
+                    ps.setInt(1, id);
+                }
+        );
+    }
+
+    public int updateThumb(int id, InputFile thumb) {
+        try {
+            String json = objectMapper.writeValueAsString(thumb);
+
+            return jdbcTemplate.update(
+                    "update upload_queue set body = body || '{\"thumb\": \"" + json + "\"}'::jsonb where id = ?",
+                    ps -> ps.setInt(1, id)
+            );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public UploadQueueItem getById(int id) {
+        return jdbcTemplate.query("SELECT * FROM upload_queue WHERE id = ?",
+                ps -> ps.setInt(1, id),
+                rs -> rs.next() ? map(rs) : null
         );
     }
 

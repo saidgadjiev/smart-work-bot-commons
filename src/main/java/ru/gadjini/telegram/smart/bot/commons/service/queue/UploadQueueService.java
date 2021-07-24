@@ -13,7 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
 import ru.gadjini.telegram.smart.bot.commons.property.ServerProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
-import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploader;
+import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 
@@ -26,8 +26,6 @@ public class UploadQueueService extends QueueService {
 
     private UploadQueueDao uploadQueueDao;
 
-    private FileUploader fileUploader;
-
     private ServerProperties serverProperties;
 
     private TempFileService tempFileService;
@@ -39,9 +37,16 @@ public class UploadQueueService extends QueueService {
         this.tempFileService = tempFileService;
     }
 
-    @Autowired
-    public void setFileUploader(FileUploader fileUploader) {
-        this.fileUploader = fileUploader;
+    public UploadQueueItem getById(int id) {
+        return uploadQueueDao.getById(id);
+    }
+
+    public int updateCaption(int id, String caption) {
+        return uploadQueueDao.updateCaption(id, caption);
+    }
+
+    public int updateThumb(int id, InputFile thumb) {
+        return uploadQueueDao.updateThumb(id, thumb);
     }
 
     public UploadQueueItem createUpload(long userId, String method, Object body, Format fileFormat,
@@ -59,7 +64,7 @@ public class UploadQueueService extends QueueService {
         uploadQueueItem.setFileFormat(fileFormat);
         uploadQueueItem.setExtra(extra);
         uploadQueueItem.setUploadType(getUploadType(method, body, UploadType.DOCUMENT));
-        uploadQueueItem.setFileSize(fileUploader.getInputFile(method, body).getNewMediaFile().length());
+        uploadQueueItem.setFileSize(FileUploadUtils.getInputFile(method, body).getNewMediaFile().length());
 
         if (serverProperties.isPrimaryServer()) {
             uploadQueueItem.setSynced(true);
@@ -74,8 +79,8 @@ public class UploadQueueService extends QueueService {
         return uploadQueueDao.poll(producer, jobWeight, limit);
     }
 
-    public void updateStatus(int id, QueueItem.Status newStatus, QueueItem.Status oldStatus) {
-        uploadQueueDao.updateStatus(id, newStatus, oldStatus);
+    public void updateStatus(int id, QueueItem.Status newStatus) {
+        uploadQueueDao.updateStatus(id, newStatus);
     }
 
     public Format getFileFormat(int id) {

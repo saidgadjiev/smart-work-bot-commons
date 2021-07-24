@@ -11,7 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.common.Profiles;
 import ru.gadjini.telegram.smart.bot.commons.dao.WorkQueueDao;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
-import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploader;
+import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadSynchronizerService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.WorkQueueService;
 
@@ -28,8 +28,6 @@ public class UploadSynchronizerJob {
 
     private UploadSynchronizerService uploadSynchronizerService;
 
-    private FileUploader fileUploader;
-
     private WorkQueueService workQueueService;
 
     @Value("${upload.synchronizer.logging:false}")
@@ -37,9 +35,8 @@ public class UploadSynchronizerJob {
 
     @Autowired
     public UploadSynchronizerJob(UploadSynchronizerService uploadSynchronizerService,
-                                 FileUploader fileUploader, WorkQueueService queueService) {
+                                 WorkQueueService queueService) {
         this.uploadSynchronizerService = uploadSynchronizerService;
-        this.fileUploader = fileUploader;
         this.workQueueService = queueService;
         LOGGER.debug("UploadSynchronizerJob initialized");
     }
@@ -83,7 +80,7 @@ public class UploadSynchronizerJob {
     }
 
     private boolean isFullySynchronized(UploadQueueItem uploadQueueItem) {
-        InputFile inputFile = fileUploader.getInputFile(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
+        InputFile inputFile = FileUploadUtils.getInputFile(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
         if (inputFile.isNew()) {
             File file = inputFile.getNewMediaFile();
 

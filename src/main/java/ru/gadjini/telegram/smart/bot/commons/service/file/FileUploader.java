@@ -16,6 +16,9 @@ import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegram
 
 import java.util.Set;
 
+import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getFilePath;
+import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getInputFile;
+
 @Service
 public class FileUploader {
 
@@ -66,57 +69,6 @@ public class FileUploader {
         if (StringUtils.isNotBlank(filePath)) {
             telegramBotApiService.cancelUploading(filePath);
         }
-    }
-
-    public InputFile getInputFile(String method, Object body) {
-        InputFile inputFile = null;
-        switch (method) {
-            case SendDocument.PATH: {
-                SendDocument sendDocument = (SendDocument) body;
-                inputFile = sendDocument.getDocument();
-                break;
-            }
-            case SendAudio.PATH: {
-                SendAudio sendAudio = (SendAudio) body;
-                inputFile = sendAudio.getAudio();
-                break;
-            }
-            case SendVideo.PATH: {
-                SendVideo sendVideo = (SendVideo) body;
-                inputFile = sendVideo.getVideo();
-                break;
-            }
-            case SendVoice.PATH: {
-                SendVoice sendVoice = (SendVoice) body;
-                inputFile = sendVoice.getVoice();
-                break;
-            }
-            case SendSticker.PATH: {
-                SendSticker sendSticker = (SendSticker) body;
-                inputFile = sendSticker.getSticker();
-                break;
-            }
-            case SendVideoNote.PATH: {
-                SendVideoNote sendVideoNote = (SendVideoNote) body;
-                inputFile = sendVideoNote.getVideoNote();
-                break;
-            }
-        }
-        if (inputFile == null) {
-            throw new IllegalArgumentException("Null input file " + body);
-        }
-
-        return inputFile;
-    }
-
-    private String getFilePath(String method, Object body) {
-        InputFile inputFile = getInputFile(method, body);
-
-        if (inputFile.isNew()) {
-            return inputFile.getNewMediaFile().getAbsolutePath();
-        }
-
-        return null;
     }
 
     private String getFilePathOrFileId(String method, Object body) {

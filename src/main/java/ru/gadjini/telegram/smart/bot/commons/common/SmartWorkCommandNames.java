@@ -7,4 +7,6 @@ public class SmartWorkCommandNames {
     }
 
     public static final String DFILE = "dfile";
+
+    public static final String SMART_FILE_COMMAND = "sfs";
 }
