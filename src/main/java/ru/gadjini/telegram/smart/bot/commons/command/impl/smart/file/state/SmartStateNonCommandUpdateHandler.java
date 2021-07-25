@@ -1,5 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -38,7 +39,10 @@ public class SmartStateNonCommandUpdateHandler implements NavigableBotCommand {
 
     @Override
     public String getParentCommandName(long l) {
-        return CommandNames.START_COMMAND_NAME;
+        SmartFileCommandState state = commandStateService.getState(l,
+                SmartWorkCommandNames.SMART_FILE_COMMAND, false, SmartFileCommandState.class);
+
+        return StringUtils.defaultIfBlank(state == null ? null : state.getPrevCommand(), CommandNames.START_COMMAND_NAME);
     }
 
     @Override

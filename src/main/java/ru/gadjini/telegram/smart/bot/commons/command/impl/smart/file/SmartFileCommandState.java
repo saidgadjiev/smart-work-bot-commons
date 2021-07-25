@@ -20,6 +20,8 @@ public class SmartFileCommandState {
 
     private Object body;
 
+    private String prevCommand;
+
     public SmartFileStateName getStateName() {
         return stateName;
     }
@@ -82,5 +84,13 @@ public class SmartFileCommandState {
 
     public void setMethod(String method) {
         this.method = method;
+    }
+
+    public String getPrevCommand() {
+        return prevCommand;
+    }
+
+    public void setPrevCommand(String prevCommand) {
+        this.prevCommand = prevCommand;
     }
 }

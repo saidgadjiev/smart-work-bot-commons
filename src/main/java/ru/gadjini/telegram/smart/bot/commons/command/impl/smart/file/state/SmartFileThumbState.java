@@ -15,7 +15,6 @@ import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.MessageMediaService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
-import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 import ru.gadjini.telegram.smart.bot.commons.service.format.FormatCategory;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
@@ -26,7 +25,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 import java.util.Locale;
 
 @Component
-public class SmartFileThumbState implements SmartFileState {
+public class SmartFileThumbState extends BaseSmartFileState {
 
     private MessageService messageService;
 
@@ -34,15 +33,11 @@ public class SmartFileThumbState implements SmartFileState {
 
     private SmartFileInlineKeyboardService smartFileInlineKeyboardService;
 
-    private SmartFileFatherState fatherState;
-
     private CommandStateService commandStateService;
 
     private UploadQueueService uploadQueueService;
 
     private MessageMediaService messageMediaService;
-
-    private CommandNavigator commandNavigator;
 
     private SmartStateNonCommandUpdateHandler nonCommandUpdateHandler;
 
@@ -71,16 +66,6 @@ public class SmartFileThumbState implements SmartFileState {
         this.nonCommandUpdateHandler = nonCommandUpdateHandler;
     }
 
-    @Autowired
-    public void setCommandNavigator(CommandNavigator commandNavigator) {
-        this.commandNavigator = commandNavigator;
-    }
-
-    @Autowired
-    public void setFatherState(SmartFileFatherState fatherState) {
-        this.fatherState = fatherState;
-    }
-
     @Override
     public SmartFileStateName getName() {
         return SmartFileStateName.THUMB;
@@ -99,15 +84,9 @@ public class SmartFileThumbState implements SmartFileState {
                         .replyMarkup(smartFileInlineKeyboardService.goBackKeyboard(callbackQuery.getMessage().getMessageId(), locale))
                         .build()
         );
-        commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
-    }
-
-    @Override
-    public void goBack(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        fatherState.enter(callbackQuery, currentState);
-        currentState.setStateName(SmartFileStateName.FATHER);
+        currentState.setPrevCommand(getCommandNavigator().getCurrentCommandName(callbackQuery.getFrom().getId()));
         commandStateService.setState(callbackQuery.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
-        commandNavigator.silentPop(callbackQuery.getFrom().getId());
+        getCommandNavigator().push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
     }
 
     @Override
@@ -117,9 +96,10 @@ public class SmartFileThumbState implements SmartFileState {
         if (thumbMedia != null && thumbMedia.getFormat().getCategory() == FormatCategory.IMAGES) {
             uploadQueueService.updateThumb(currentState.getUploadId(), thumbMedia.toTgFile());
             currentState.setThumb(thumbMedia.getFileId());
-            currentState.setStateName(fatherState.getName());
-            fatherState.restore(message.getFrom().getId(), currentState);
-            commandNavigator.silentPop(message.getFrom().getId());
+            currentState.setPrevCommand(null);
+            currentState.setStateName(getFatherState().getName());
+            getFatherState().restore(message.getFrom().getId(), currentState);
+            silentPop(message.getFrom().getId());
             commandStateService.setState(message.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
         } else {
             throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_SEND_THUMB, locale));

@@ -14,7 +14,6 @@ import ru.gadjini.telegram.smart.bot.commons.exception.UserException;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
-import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.SmartWorkMessageProperties;
@@ -25,7 +24,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
 import java.util.Locale;
 
 @Component
-public class SmartFileCaptionState implements SmartFileState {
+public class SmartFileCaptionState extends BaseSmartFileState {
 
     public static final String REMOVE_CAPTION = "xcptn";
 
@@ -37,13 +36,9 @@ public class SmartFileCaptionState implements SmartFileState {
 
     private UserService userService;
 
-    private SmartFileFatherState fatherState;
-
     private CommandStateService commandStateService;
 
     private UploadQueueService uploadQueueService;
-
-    private CommandNavigator commandNavigator;
 
     private SmartStateNonCommandUpdateHandler nonCommandUpdateHandler;
 
@@ -70,16 +65,6 @@ public class SmartFileCaptionState implements SmartFileState {
         this.nonCommandUpdateHandler = nonCommandUpdateHandler;
     }
 
-    @Autowired
-    public void setCommandNavigator(CommandNavigator commandNavigator) {
-        this.commandNavigator = commandNavigator;
-    }
-
-    @Autowired
-    public void setFatherState(SmartFileFatherState fatherState) {
-        this.fatherState = fatherState;
-    }
-
     @Override
     public SmartFileStateName getName() {
         return SmartFileStateName.CAPTION;
@@ -88,15 +73,9 @@ public class SmartFileCaptionState implements SmartFileState {
     @Override
     public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
         updateMessage(callbackQuery, currentState.getUploadId(), currentState.getCaption());
-        commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
-    }
-
-    @Override
-    public void goBack(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        fatherState.enter(callbackQuery, currentState);
-        currentState.setStateName(SmartFileStateName.FATHER);
+        currentState.setPrevCommand(getCommandNavigator().getCurrentCommandName(callbackQuery.getFrom().getId()));
         commandStateService.setState(callbackQuery.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
-        commandNavigator.silentPop(callbackQuery.getFrom().getId());
+        getCommandNavigator().push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
     }
 
     @Override
@@ -116,8 +95,9 @@ public class SmartFileCaptionState implements SmartFileState {
         uploadQueueService.updateCaption(currentState.getUploadId(), caption);
         currentState.setCaption(caption);
         currentState.setStateName(SmartFileStateName.FATHER);
-        fatherState.restore(userId, currentState);
-        commandNavigator.silentPop(userId);
+        currentState.setPrevCommand(null);
+        getFatherState().restore(userId, currentState);
+        silentPop(userId);
         commandStateService.setState(userId, SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
     }
 

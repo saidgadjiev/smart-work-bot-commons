@@ -45,7 +45,7 @@ public class SmartFileMessageBuilder {
     public String buildCaptionMessage(String caption, Locale locale) {
         String captionArg;
         if (StringUtils.isBlank(caption) || SmartFileCaptionState.REMOVE_CAPTION.equals(caption)) {
-            return localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_NOT_DEFINED, locale);
+            captionArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_NOT_DEFINED, locale);
         } else {
             captionArg = caption;
         }
