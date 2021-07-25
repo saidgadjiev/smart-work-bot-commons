@@ -5,7 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.*;
+import ru.gadjini.telegram.smart.bot.commons.domain.FileSource;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
+import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
@@ -40,6 +42,35 @@ public class UploadQueueItemMapper {
         item.setMethod(rs.getString(UploadQueueItem.METHOD));
         item.setBody(deserializeBody(item.getMethod(), rs.getString(UploadQueueItem.BODY)));
 
+        Set<String> columns = JdbcUtils.getColumnNames(rs.getMetaData());
+        if (columns.contains(UploadQueueItem.THUMB_FILE_ID)) {
+            item.setThumbFileId(rs.getString(UploadQueueItem.THUMB_FILE_ID));
+        }
+        if (columns.contains(TgFile.FILE_ID)) {
+            String customThumbFileId = rs.getString(TgFile.FILE_ID);
+            if (!rs.wasNull()) {
+                TgFile customThumb = new TgFile();
+                customThumb.setFileId(customThumbFileId);
+                customThumb.setFileName(rs.getString(TgFile.FILE_NAME));
+                customThumb.setSize(rs.getLong(TgFile.SIZE));
+                String source = rs.getString(TgFile.SOURCE);
+                if (StringUtils.isNotBlank(source)) {
+                    customThumb.setSource(FileSource.valueOf(source));
+                }
+                String format = rs.getString(TgFile.FORMAT);
+                if (StringUtils.isNotBlank(format)) {
+                    customThumb.setFormat(Format.valueOf(format));
+                }
+                item.setCustomThumb(customThumb);
+            }
+        }
+        if (columns.contains(UploadQueueItem.CUSTOM_CAPTION)) {
+            item.setCustomCaption(rs.getString(UploadQueueItem.CUSTOM_CAPTION));
+        }
+        if (columns.contains(UploadQueueItem.CUSTOM_FILE_NAME)) {
+            item.setCustomFileName(rs.getString(UploadQueueItem.CUSTOM_FILE_NAME));
+        }
+
         Timestamp nextRunAt = rs.getTimestamp(UploadQueueItem.NEXT_RUN_AT);
         if (nextRunAt != null) {
             item.setNextRunAt(ZonedDateTime.of(nextRunAt.toLocalDateTime(), ZoneOffset.UTC));
@@ -52,7 +83,6 @@ public class UploadQueueItemMapper {
         if (StringUtils.isNotBlank(extra)) {
             item.setExtra(jackson.readValue(extra, JsonNode.class));
         }
-        Set<String> columns = JdbcUtils.getColumnNames(rs.getMetaData());
         if (columns.contains(UploadQueueItem.UPLOAD_TYPE)) {
             String uploadType = rs.getString(UploadQueueItem.UPLOAD_TYPE);
             if (StringUtils.isNotBlank(uploadType)) {

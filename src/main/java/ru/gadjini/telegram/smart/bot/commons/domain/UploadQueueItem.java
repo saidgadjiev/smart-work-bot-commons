@@ -34,6 +34,14 @@ public class UploadQueueItem extends QueueItem {
 
     public static final String SYNCED = "synced";
 
+    public static final String CUSTOM_THUMB = "custom_thumb";
+
+    public static final String CUSTOM_CAPTION = "custom_caption";
+
+    public static final String CUSTOM_FILE_NAME = "custom_file_name";
+
+    public static final String THUMB_FILE_ID = "thumb_file_id";
+
     private String producerTable;
 
     private String producer;
@@ -57,6 +65,14 @@ public class UploadQueueItem extends QueueItem {
     private ZonedDateTime nextRunAt;
 
     private boolean synced;
+
+    private TgFile customThumb;
+
+    private String customCaption;
+
+    private String customFileName;
+
+    private String thumbFileId;
 
     public String getProducerTable() {
         return producerTable;
@@ -152,5 +168,37 @@ public class UploadQueueItem extends QueueItem {
 
     public void setSynced(boolean synced) {
         this.synced = synced;
+    }
+
+    public TgFile getCustomThumb() {
+        return customThumb;
+    }
+
+    public void setCustomThumb(TgFile customThumb) {
+        this.customThumb = customThumb;
+    }
+
+    public String getCustomCaption() {
+        return customCaption;
+    }
+
+    public void setCustomCaption(String customCaption) {
+        this.customCaption = customCaption;
+    }
+
+    public String getCustomFileName() {
+        return customFileName;
+    }
+
+    public void setCustomFileName(String customFileName) {
+        this.customFileName = customFileName;
+    }
+
+    public String getThumbFileId() {
+        return thumbFileId;
+    }
+
+    public void setThumbFileId(String thumbFileId) {
+        this.thumbFileId = thumbFileId;
     }
 }

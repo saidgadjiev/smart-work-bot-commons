@@ -3,14 +3,17 @@ package ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.command.api.CallbackBotCommand;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileState;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileStateName;
+import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.StateRestorer;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartFileArg;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.request.Arg;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
+import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
@@ -26,10 +29,17 @@ public class SmartFileCommand implements CallbackBotCommand {
 
     private Set<SmartFileState> smartFileStates;
 
+    private StateRestorer stateRestorer;
+
+    private CommandNavigator commandNavigator;
+
     @Autowired
-    public SmartFileCommand(UploadQueueService uploadQueueService, CommandStateService commandStateService) {
+    public SmartFileCommand(UploadQueueService uploadQueueService, CommandStateService commandStateService,
+                            StateRestorer stateRestorer, CommandNavigator commandNavigator) {
         this.uploadQueueService = uploadQueueService;
         this.commandStateService = commandStateService;
+        this.stateRestorer = stateRestorer;
+        this.commandNavigator = commandNavigator;
     }
 
     @Autowired
@@ -57,14 +67,19 @@ public class SmartFileCommand implements CallbackBotCommand {
                 state = createState(requestParams.get(SmartFileArg.STATE.getKey(), SmartFileStateName::valueOf),
                         uploadId, callbackQuery.getMessage().getMessageId());
                 commandStateService.setState(callbackQuery.getFrom().getId(), getName(), state);
-                getState(state.getStateName()).enter(this, callbackQuery, state);
+                getState(state.getStateName()).enter(callbackQuery, state);
             } else {
-                getState(state.getStateName()).callbackUpdate(this, callbackQuery, requestParams, state);
+                getState(state.getStateName()).callbackUpdate(callbackQuery, requestParams, state);
             }
         } else if (requestParams.contains(SmartFileArg.GO_BACK.getKey())) {
+            int uploadId = requestParams.getInt(Arg.QUEUE_ITEM_ID.getKey());
             SmartFileCommandState state = commandStateService.getState(callbackQuery.getFrom().getId(),
-                    getName(), true, SmartFileCommandState.class);
-            getState(state.getStateName()).goBack(this, callbackQuery, state);
+                    getName(), false, SmartFileCommandState.class, () -> {
+                        commandNavigator.silentPop(callbackQuery.getFrom().getId());
+                        return stateRestorer.restoreState(uploadId,
+                                callbackQuery.getMessage().getMessageId());
+                    });
+            getState(state.getStateName()).goBack(callbackQuery, state);
         }
     }
 
@@ -77,8 +92,17 @@ public class SmartFileCommand implements CallbackBotCommand {
         commandState.setStateName(stateName);
         UploadQueueItem uploadQueueItem = uploadQueueService.getById(uploadId);
         commandState.setUploadId(uploadId);
+
+        commandState.setMethod(uploadQueueItem.getMethod());
+        commandState.setBody(uploadQueueItem.getBody());
         commandState.setCaption(FileUploadUtils.getCaption(uploadQueueItem.getMethod(), uploadQueueItem.getBody()));
-        commandState.setThumb(FileUploadUtils.getCaption(uploadQueueItem.getMethod(), uploadQueueItem.getBody()));
+
+        InputFile thumbFile = FileUploadUtils.getThumbFile(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
+        if (thumbFile != null) {
+            commandState.setThumb(thumbFile.getMediaName());
+        }
+        commandState.setFileName(FileUploadUtils.getFileName(uploadQueueItem.getMethod(), uploadQueueItem.getBody()));
+
         commandState.setMessageId(messageId);
 
         return commandState;

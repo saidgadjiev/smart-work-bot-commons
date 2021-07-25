@@ -7,15 +7,14 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import ru.gadjini.telegram.smart.bot.commons.annotation.TgMessageLimitsControl;
-import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCommand;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCommandState;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartFileArg;
+import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
-import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
-import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartUploadMessageBuilder;
+import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartFileMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
 
 import java.util.Locale;
@@ -29,7 +28,7 @@ public class SmartFileFatherState implements SmartFileState {
 
     private SmartFileInlineKeyboardService smartFileInlineKeyboardService;
 
-    private SmartUploadMessageBuilder smartUploadMessageBuilder;
+    private SmartFileMessageBuilder smartUploadMessageBuilder;
 
     private CommandStateService commandStateService;
 
@@ -37,28 +36,18 @@ public class SmartFileFatherState implements SmartFileState {
 
     private SmartFileThumbState thumbState;
 
-    private CommandNavigator commandNavigator;
-
-    private SmartStateNonCommandUpdateHandler nonCommandUpdateHandler;
+    private SmartFileMessageBodyDeserializer messageBodyDeserializer;
 
     @Autowired
     public SmartFileFatherState(@TgMessageLimitsControl MessageService messageService, UserService userService,
                                 SmartFileInlineKeyboardService smartFileInlineKeyboardService,
-                                SmartUploadMessageBuilder smartUploadMessageBuilder) {
+                                SmartFileMessageBuilder smartUploadMessageBuilder,
+                                SmartFileMessageBodyDeserializer messageBodyDeserializer) {
         this.messageService = messageService;
         this.userService = userService;
         this.smartFileInlineKeyboardService = smartFileInlineKeyboardService;
         this.smartUploadMessageBuilder = smartUploadMessageBuilder;
-    }
-
-    @Autowired
-    public void setNonCommandUpdateHandler(SmartStateNonCommandUpdateHandler nonCommandUpdateHandler) {
-        this.nonCommandUpdateHandler = nonCommandUpdateHandler;
-    }
-
-    @Autowired
-    public void setCommandNavigator(CommandNavigator commandNavigator) {
-        this.commandNavigator = commandNavigator;
+        this.messageBodyDeserializer = messageBodyDeserializer;
     }
 
     @Autowired
@@ -82,13 +71,29 @@ public class SmartFileFatherState implements SmartFileState {
     }
 
     @Override
-    public void enter(SmartFileCommand command, CallbackQuery callbackQuery, SmartFileCommandState currentState) {
+    public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
         Locale locale = userService.getLocaleOrDefault(callbackQuery.getFrom().getId());
-        InlineKeyboardMarkup smartKeyboard = smartFileInlineKeyboardService.getSmartUploadKeyboard(currentState.getUploadId(), locale);
+        InlineKeyboardMarkup smartKeyboard = smartFileInlineKeyboardService.getSmartUploadKeyboard(currentState.getUploadId(),
+                currentState.getMethod(),
+                messageBodyDeserializer.deserialize(currentState.getMethod(), currentState.getBody()), locale);
         messageService.editMessage(
                 EditMessageText.builder().chatId(String.valueOf(callbackQuery.getFrom().getId()))
                         .messageId(callbackQuery.getMessage().getMessageId())
-                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(locale))
+                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(currentState, locale))
+                        .parseMode(ParseMode.HTML)
+                        .replyMarkup(smartKeyboard)
+                        .build()
+        );
+    }
+
+    public void restore(long userId, SmartFileCommandState currentState) {
+        Locale locale = userService.getLocaleOrDefault(userId);
+        InlineKeyboardMarkup smartKeyboard = smartFileInlineKeyboardService.getSmartUploadKeyboard(currentState.getUploadId(),
+                currentState.getMethod(), messageBodyDeserializer.deserialize(currentState.getMethod(), currentState.getBody()), locale);
+        messageService.editMessage(
+                EditMessageText.builder().chatId(String.valueOf(userId))
+                        .messageId(currentState.getMessageId())
+                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(currentState, locale))
                         .parseMode(ParseMode.HTML)
                         .replyMarkup(smartKeyboard)
                         .build()
@@ -96,29 +101,28 @@ public class SmartFileFatherState implements SmartFileState {
     }
 
     @Override
-    public void goBack(SmartFileCommand command, CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        enter(command, callbackQuery, currentState);
+    public void goBack(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
+        enter(callbackQuery, currentState);
         currentState.setStateName(SmartFileStateName.FATHER);
-        commandStateService.setState(callbackQuery.getFrom().getId(), command.getName(), currentState);
+        commandStateService.setState(callbackQuery.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
     }
 
     @Override
-    public void callbackUpdate(SmartFileCommand command, CallbackQuery callbackQuery, RequestParams requestParams, SmartFileCommandState currentState) {
+    public void callbackUpdate(CallbackQuery callbackQuery, RequestParams requestParams, SmartFileCommandState currentState) {
         if (requestParams.contains(SmartFileArg.STATE.getKey())) {
             SmartFileStateName stateName = requestParams.get(SmartFileArg.STATE.getKey(), SmartFileStateName::valueOf);
             switch (stateName) {
                 case THUMB:
-                    thumbState.enter(command, callbackQuery, currentState);
+                    thumbState.enter(callbackQuery, currentState);
                     break;
                 case CAPTION:
-                    captionState.enter(command, callbackQuery, currentState);
+                    captionState.enter(callbackQuery, currentState);
                     break;
                 default:
                     break;
             }
             currentState.setStateName(stateName);
-            commandStateService.setState(callbackQuery.getFrom().getId(), command.getName(), currentState);
-            commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
+            commandStateService.setState(callbackQuery.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
         }
     }
 }

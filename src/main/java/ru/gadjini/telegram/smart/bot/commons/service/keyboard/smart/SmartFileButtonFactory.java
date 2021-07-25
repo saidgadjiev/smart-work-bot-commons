@@ -54,6 +54,18 @@ public class SmartFileButtonFactory {
         return inlineKeyboardButton;
     }
 
+    public InlineKeyboardButton fileNameButton(int uploadId, Locale locale) {
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(
+                localisationService.getMessage(MessagesProperties.FILENAME_COMMAND_DESCRIPTION, locale));
+        inlineKeyboardButton.setCallbackData(CommandNames.CALLBACK_DELEGATE_COMMAND_NAME + CommandParser.COMMAND_NAME_SEPARATOR +
+                new RequestParams()
+                        .add(CallbackDelegate.ARG_NAME, SmartWorkCommandNames.SMART_FILE_COMMAND)
+                        .add(Arg.QUEUE_ITEM_ID.getKey(), uploadId)
+                        .add(SmartFileArg.STATE.getKey(), SmartFileStateName.FILENAME.name())
+                        .serialize(CommandParser.COMMAND_ARG_SEPARATOR));
+
+        return inlineKeyboardButton;
+    }
 
     public InlineKeyboardButton thumbButton(int uploadId, Locale locale) {
         InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(
@@ -70,7 +82,7 @@ public class SmartFileButtonFactory {
 
     public InlineKeyboardButton doSmartUpload(int uploadId, Locale locale) {
         InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(localisationService.getMessage(MessagesProperties.DO_SMART_UPLOAD_COMMAND_DESCRIPTION, locale));
-        inlineKeyboardButton.setCallbackData(CommandNames.GET_SMART_FILE + CommandParser.COMMAND_NAME_SEPARATOR +
+        inlineKeyboardButton.setCallbackData(SmartWorkCommandNames.GET_SMART_FILE + CommandParser.COMMAND_NAME_SEPARATOR +
                 new RequestParams()
                         .add(Arg.QUEUE_ITEM_ID.getKey(), uploadId)
                         .serialize(CommandParser.COMMAND_ARG_SEPARATOR));

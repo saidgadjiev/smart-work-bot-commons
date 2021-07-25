@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import ru.gadjini.telegram.smart.bot.commons.command.api.CallbackBotCommand;
-import ru.gadjini.telegram.smart.bot.commons.common.CommandNames;
 import ru.gadjini.telegram.smart.bot.commons.common.MessagesProperties;
+import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
 import ru.gadjini.telegram.smart.bot.commons.request.Arg;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
@@ -39,7 +39,7 @@ public class DoSmartUploadCommand implements CallbackBotCommand {
 
     @Override
     public String getName() {
-        return CommandNames.GET_SMART_FILE;
+        return SmartWorkCommandNames.GET_SMART_FILE;
     }
 
     @Override

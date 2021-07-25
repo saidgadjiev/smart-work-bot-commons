@@ -6,15 +6,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
+import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.model.SendFileResult;
-import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
+import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
+import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.service.flood.UploadFloodWaitController;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MediaMessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
-
-import java.util.Set;
 
 import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getFilePath;
 import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getInputFile;
@@ -22,23 +23,32 @@ import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils
 @Service
 public class FileUploader {
 
+    private static final String TAG = "updthmb";
+
     private CancelableTelegramBotApiMediaService telegramBotApiService;
 
     private MediaMessageService mediaMessageService;
 
     private UploadFloodWaitController uploadFloodWaitController;
 
+    private FileDownloader fileDownloader;
+
+    private TempFileService tempFileService;
+
     @Autowired
     public FileUploader(CancelableTelegramBotApiMediaService telegramBotApiService,
                         @Qualifier("mediaLimits") MediaMessageService mediaMessageService,
-                        UploadFloodWaitController uploadFloodWaitController) {
+                        UploadFloodWaitController uploadFloodWaitController, FileDownloader fileDownloader,
+                        TempFileService tempFileService) {
         this.telegramBotApiService = telegramBotApiService;
         this.mediaMessageService = mediaMessageService;
         this.uploadFloodWaitController = uploadFloodWaitController;
+        this.fileDownloader = fileDownloader;
+        this.tempFileService = tempFileService;
     }
 
     public SendFileResult upload(UploadQueueItem uploadQueueItem, boolean withFloodControl) {
-        applySmartOptionsToBody(uploadQueueItem);
+        applySmartFileFeatures(uploadQueueItem);
         if (withFloodControl) {
             return uploadWithFloodControl(uploadQueueItem);
         } else {
@@ -112,48 +122,31 @@ public class FileUploader {
         throw new IllegalArgumentException("Unsupported method to upload " + method);
     }
 
-    private void applySmartOptionsToBody(UploadQueueItem queueItem) {
-        switch (queueItem.getMethod()) {
-            case SendDocument.PATH: {
-                SendDocument sendDocument = (SendDocument) queueItem.getBody();
-                if (Set.of(UploadType.VIDEO, UploadType.STREAMING_VIDEO).contains(queueItem.getUploadType())) {
-                    SendVideo sendVideo = convert(sendDocument);
-                    sendVideo.setSupportsStreaming(queueItem.getUploadType() == UploadType.STREAMING_VIDEO);
-                    queueItem.setBody(sendVideo);
-                    queueItem.setMethod(SendVideo.PATH);
-                }
-                break;
-            }
-            case SendVideo.PATH: {
-                SendVideo sendVideo = (SendVideo) queueItem.getBody();
-                if (queueItem.getUploadType() == UploadType.DOCUMENT) {
-                    queueItem.setBody(convert(sendVideo));
-                    queueItem.setMethod(SendDocument.PATH);
-                } else if (queueItem.getUploadType() == UploadType.STREAMING_VIDEO) {
-                    sendVideo.setSupportsStreaming(true);
-                } else if (queueItem.getUploadType() == UploadType.VIDEO) {
-                    sendVideo.setSupportsStreaming(null);
-                }
-                break;
+    private void applySmartFileFeatures(UploadQueueItem queueItem) {
+        if (StringUtils.isNotBlank(queueItem.getCustomCaption())) {
+            FileUploadUtils.setCaption(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomCaption());
+        }
+        if (StringUtils.isNotBlank(queueItem.getCustomFileName())) {
+            FileUploadUtils.setFileName(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomFileName());
+        }
+        if (queueItem.getCustomThumb() != null) {
+            SmartTempFile thumb = downloadThumb(queueItem.getUserId(), queueItem.getCustomThumb());
+            if (thumb != null) {
+                FileUploadUtils.setThumbFile(queueItem.getMethod(), queueItem.getBody(), new InputFile(thumb.getFile()));
             }
         }
     }
 
-    private SendDocument convert(SendVideo sendVideo) {
-        return SendDocument.builder().chatId(sendVideo.getChatId())
-                .document(sendVideo.getVideo())
-                .allowSendingWithoutReply(sendVideo.getAllowSendingWithoutReply())
-                .caption(sendVideo.getCaption())
-                .parseMode(sendVideo.getParseMode())
-                .parseMode(sendVideo.getParseMode()).build();
-    }
+    private SmartTempFile downloadThumb(long userId, TgFile file) {
+        SmartTempFile result = tempFileService.createTempFile(FileTarget.DOWNLOAD, userId,
+                file.getFileId(), TAG, file.getFormat().getExt());
+        try {
+            fileDownloader.downloadFileByFileId(file.getFileId(), file.getSize(), result, false);
+        } catch (Throwable e) {
+            tempFileService.delete(result);
+            return null;
+        }
 
-    private SendVideo convert(SendDocument sendDocument) {
-        return SendVideo.builder().chatId(sendDocument.getChatId())
-                .video(sendDocument.getDocument())
-                .allowSendingWithoutReply(sendDocument.getAllowSendingWithoutReply())
-                .caption(sendDocument.getCaption())
-                .parseMode(sendDocument.getParseMode())
-                .parseMode(sendDocument.getParseMode()).build();
+        return result;
     }
 }

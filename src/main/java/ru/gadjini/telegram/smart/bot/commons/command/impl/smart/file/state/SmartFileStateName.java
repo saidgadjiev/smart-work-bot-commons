@@ -6,5 +6,7 @@ public enum SmartFileStateName {
 
     THUMB,
 
+    FILENAME,
+
     FATHER
 }

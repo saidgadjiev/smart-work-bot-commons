@@ -1,15 +1,13 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
+import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
 import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
@@ -39,19 +37,16 @@ public class UploadQueueDao extends QueueDao {
 
     private ServerProperties serverProperties;
 
-    private ObjectMapper objectMapper;
-
     @Autowired
     public UploadQueueDao(JdbcTemplate jdbcTemplate, Jackson jackson,
                           DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
-                          UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties, ObjectMapper objectMapper) {
+                          UploadQueueItemMapper queueItemMapper, ServerProperties serverProperties) {
         this.jdbcTemplate = jdbcTemplate;
         this.jackson = jackson;
         this.mediaLimitProperties = mediaLimitProperties;
         this.workQueueDao = workQueueDao;
         this.queueItemMapper = queueItemMapper;
         this.serverProperties = serverProperties;
-        this.objectMapper = objectMapper;
     }
 
     public void create(UploadQueueItem queueItem) {
@@ -136,7 +131,7 @@ public class UploadQueueDao extends QueueDao {
                         "and qu.producer = ? and synced = true " +
                         "AND file_size " + (jobWeight.equals(SmartExecutorService.JobWeight.LIGHT) ? "<=" : ">") + " ?\n" +
                         QueueDao.POLL_ORDER_BY + " LIMIT " + limit + ")\n" +
-                        "RETURNING *",
+                        "RETURNING *, (custom_thumb).*",
                 ps -> {
                     ps.setString(1, producer);
                     ps.setLong(2, mediaLimitProperties.getLightFileMaxWeight());
@@ -165,30 +160,49 @@ public class UploadQueueDao extends QueueDao {
         );
     }
 
-    public int updateCaption(int id, String caption) {
-        return jdbcTemplate.update(
-                "update upload_queue set body = body || '{\"caption\": \"" + caption + "\"}'::jsonb where id = ?",
+    public String getThumb(int id) {
+        return jdbcTemplate.query(
+                "SELECT coalesce((custom_thumb).file_id, thumb_file_id) thumb " +
+                        "FROM upload_queue WHERE id = ?",
                 ps -> {
                     ps.setInt(1, id);
+                },
+                rs -> rs.next() ? rs.getString("thumb") : null
+        );
+    }
+
+    public int updateCaption(int id, String caption) {
+        return jdbcTemplate.update(
+                "update upload_queue set custom_caption = ? where id = ?",
+                ps -> {
+                    ps.setString(1, caption);
+                    ps.setInt(2, id);
                 }
         );
     }
 
-    public int updateThumb(int id, InputFile thumb) {
-        try {
-            String json = objectMapper.writeValueAsString(thumb);
+    public int updateFileName(int id, String fileName) {
+        return jdbcTemplate.update(
+                "update upload_queue set custom_file_name = ? where id = ?",
+                ps -> {
+                    ps.setString(1, fileName);
+                    ps.setInt(2, id);
+                }
+        );
+    }
 
-            return jdbcTemplate.update(
-                    "update upload_queue set body = body || '{\"thumb\": \"" + json + "\"}'::jsonb where id = ?",
-                    ps -> ps.setInt(1, id)
-            );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+    public int updateThumb(int id, TgFile thumb) {
+        return jdbcTemplate.update(
+                "update upload_queue set custom_thumb = ? where id = ?",
+                ps -> {
+                    ps.setObject(1, thumb.sqlObject());
+                    ps.setInt(2, id);
+                }
+        );
     }
 
     public UploadQueueItem getById(int id) {
-        return jdbcTemplate.query("SELECT * FROM upload_queue WHERE id = ?",
+        return jdbcTemplate.query("SELECT *, (custom_thumb).* FROM upload_queue WHERE id = ?",
                 ps -> ps.setInt(1, id),
                 rs -> rs.next() ? map(rs) : null
         );
@@ -224,6 +238,16 @@ public class UploadQueueDao extends QueueDao {
         jdbcTemplate.update(
                 "UPDATE upload_queue SET status = 0 WHERE status = 4 AND " +
                         "created_at + interval '" + expirationInSeconds + " seconds' < now()"
+        );
+    }
+
+    public void setThumbFileId(int id, String thumbFileId) {
+        jdbcTemplate.update(
+                "UPDATE upload_queue SET thumb_file_id = ? WHERE id = ?",
+                ps -> {
+                    ps.setString(1, thumbFileId);
+                    ps.setInt(2, id);
+                }
         );
     }
 

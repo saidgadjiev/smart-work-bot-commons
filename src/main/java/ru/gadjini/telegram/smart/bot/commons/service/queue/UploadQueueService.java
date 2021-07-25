@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.dao.QueueDao;
 import ru.gadjini.telegram.smart.bot.commons.dao.UploadQueueDao;
 import ru.gadjini.telegram.smart.bot.commons.domain.QueueItem;
+import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
@@ -45,7 +46,15 @@ public class UploadQueueService extends QueueService {
         return uploadQueueDao.updateCaption(id, caption);
     }
 
-    public int updateThumb(int id, InputFile thumb) {
+    public int updateFileName(int id, String fileName) {
+        return uploadQueueDao.updateFileName(id, fileName);
+    }
+
+    public String getThumb(int id) {
+        return uploadQueueDao.getThumb(id);
+    }
+
+    public int updateThumb(int id, TgFile thumb) {
         return uploadQueueDao.updateThumb(id, thumb);
     }
 
@@ -111,6 +120,10 @@ public class UploadQueueService extends QueueService {
         uploadQueueDao.setWaitingExpiredSmartUploads(expirationInSeconds);
     }
 
+    public void setThumbFileId(int id, String thumbFileId) {
+        uploadQueueDao.setThumbFileId(id, thumbFileId);
+    }
+
     public void deleteCompletedAndOrphans(String producer, String producerTable, Set<Integer> producerIds) {
         List<UploadQueueItem> deleted = new ArrayList<>(deleteByProducerIdsWithReturning(producer, producerIds));
         List<UploadQueueItem> orphanUploads = deleteOrphanUploads(producer, producerTable);
@@ -128,44 +141,8 @@ public class UploadQueueService extends QueueService {
         if (uploadQueueItem == null) {
             return;
         }
-        InputFile inputFile = null;
-        InputFile thumb = null;
-        switch (uploadQueueItem.getMethod()) {
-            case SendDocument.PATH: {
-                SendDocument sendDocument = (SendDocument) uploadQueueItem.getBody();
-                inputFile = sendDocument.getDocument();
-                thumb = sendDocument.getThumb();
-                break;
-            }
-            case SendAudio.PATH: {
-                SendAudio sendAudio = (SendAudio) uploadQueueItem.getBody();
-                inputFile = sendAudio.getAudio();
-                thumb = sendAudio.getThumb();
-                break;
-            }
-            case SendVideo.PATH: {
-                SendVideo sendVideo = (SendVideo) uploadQueueItem.getBody();
-                inputFile = sendVideo.getVideo();
-                thumb = sendVideo.getThumb();
-                break;
-            }
-            case SendVoice.PATH: {
-                SendVoice sendVoice = (SendVoice) uploadQueueItem.getBody();
-                inputFile = sendVoice.getVoice();
-                break;
-            }
-            case SendSticker.PATH: {
-                SendSticker sendSticker = (SendSticker) uploadQueueItem.getBody();
-                inputFile = sendSticker.getSticker();
-                break;
-            }
-            case SendVideoNote.PATH: {
-                SendVideoNote sendVideoNote = (SendVideoNote) uploadQueueItem.getBody();
-                inputFile = sendVideoNote.getVideoNote();
-                thumb = sendVideoNote.getThumb();
-                break;
-            }
-        }
+        InputFile inputFile = FileUploadUtils.getInputFile(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
+        InputFile thumb = FileUploadUtils.getThumbFile(uploadQueueItem.getMethod(), uploadQueueItem.getBody());
 
         if (inputFile != null && inputFile.isNew()) {
             tempFileService.delete(new SmartTempFile(inputFile.getNewMediaFile()));

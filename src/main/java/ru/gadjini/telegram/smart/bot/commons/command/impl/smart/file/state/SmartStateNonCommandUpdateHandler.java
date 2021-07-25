@@ -8,6 +8,7 @@ import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCo
 import ru.gadjini.telegram.smart.bot.commons.common.CommandNames;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
+import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 
 import java.util.Set;
 
@@ -18,9 +19,16 @@ public class SmartStateNonCommandUpdateHandler implements NavigableBotCommand {
 
     private CommandStateService commandStateService;
 
+    private CommandNavigator commandNavigator;
+
     @Autowired
     public SmartStateNonCommandUpdateHandler(CommandStateService commandStateService) {
         this.commandStateService = commandStateService;
+    }
+
+    @Autowired
+    public void setCommandNavigator(CommandNavigator commandNavigator) {
+        this.commandNavigator = commandNavigator;
     }
 
     @Autowired
@@ -41,8 +49,13 @@ public class SmartStateNonCommandUpdateHandler implements NavigableBotCommand {
     @Override
     public void processNonCommandUpdate(Message message, String text) {
         SmartFileCommandState state = commandStateService.getState(message.getFrom().getId(),
-                SmartWorkCommandNames.SMART_FILE_COMMAND, true, SmartFileCommandState.class);
-        getState(state.getStateName()).update(message, text, state);
+                SmartWorkCommandNames.SMART_FILE_COMMAND, false, SmartFileCommandState.class);
+        if (state == null) {
+            commandNavigator.silentPop(message.getChatId());
+        } else {
+            getState(state.getStateName()).update(message, text, state);
+
+        }
     }
 
     private SmartFileState getState(SmartFileStateName stateName) {

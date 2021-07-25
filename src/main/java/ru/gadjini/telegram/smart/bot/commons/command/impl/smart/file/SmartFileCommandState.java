@@ -10,9 +10,15 @@ public class SmartFileCommandState {
 
     private String caption;
 
+    private String fileName;
+
     private String thumb;
 
     private int uploadId;
+
+    private String method;
+
+    private Object body;
 
     public SmartFileStateName getStateName() {
         return stateName;
@@ -52,5 +58,29 @@ public class SmartFileCommandState {
 
     public void setMessageId(int messageId) {
         this.messageId = messageId;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public Object getBody() {
+        return body;
+    }
+
+    public void setBody(Object body) {
+        this.body = body;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
     }
 }

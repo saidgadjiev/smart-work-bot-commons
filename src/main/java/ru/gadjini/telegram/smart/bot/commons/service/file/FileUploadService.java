@@ -15,7 +15,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.format.Format;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
-import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartUploadMessageBuilder;
+import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartFileMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.settings.UserSettingsService;
 
@@ -33,7 +33,7 @@ public class FileUploadService {
 
     private SmartFileInlineKeyboardService smartKeyboardService;
 
-    private SmartUploadMessageBuilder smartUploadMessageBuilder;
+    private SmartFileMessageBuilder smartUploadMessageBuilder;
 
     private MessageService messageService;
 
@@ -44,7 +44,7 @@ public class FileUploadService {
     @Autowired
     public FileUploadService(UploadQueueService uploadQueueService,
                              WorkQueueDao workQueueDao, SmartFileInlineKeyboardService smartKeyboardService,
-                             SmartUploadMessageBuilder smartUploadMessageBuilder, @Qualifier("messageLimits") MessageService messageService,
+                             SmartFileMessageBuilder smartUploadMessageBuilder, @Qualifier("messageLimits") MessageService messageService,
                              UserService userService, UserSettingsService userSettingsService) {
         this.uploadQueueService = uploadQueueService;
         this.workQueueDao = workQueueDao;
@@ -64,13 +64,16 @@ public class FileUploadService {
         uploadQueueService.updateStatus(uploadId, QueueItem.Status.WAITING);
     }
 
-    public void createUpload(long userId, String method, Object body, Format fileFormat, Progress progress, int producerId, Object extra) {
-        if (isSmartFile(userId)) {
-            UploadQueueItem upload = uploadQueueService.createUpload(userId, method, body, fileFormat, progress, workQueueDao.getQueueName(),
+    public void createUpload(long userId, String method, Object body, Format fileFormat,
+                             Progress progress, int producerId, Object extra) {
+        if (isSmartFile(userId, method, body)) {
+            UploadQueueItem upload = uploadQueueService.createUpload(userId, method, body, fileFormat,
+                    progress, workQueueDao.getQueueName(),
                     workQueueDao.getProducerName(), producerId, QueueItem.Status.BLOCKED, extra);
             sendSmartFile(upload);
         } else {
-            uploadQueueService.createUpload(userId, method, body, fileFormat, progress, workQueueDao.getQueueName(),
+            uploadQueueService.createUpload(userId, method, body, fileFormat,
+                    progress, workQueueDao.getQueueName(),
                     workQueueDao.getProducerName(), producerId, QueueItem.Status.WAITING, extra);
         }
     }
@@ -79,7 +82,8 @@ public class FileUploadService {
         createUpload(userId, method, body, null, progress, producerId, null);
     }
 
-    public void createUpload(long userId, String method, Object body, Format fileFormat, Progress progress, int producerId) {
+    public void createUpload(long userId, String method, Object body, Format fileFormat,
+                             Progress progress, int producerId) {
         createUpload(userId, method, body, fileFormat, progress, producerId, null);
     }
 
@@ -103,16 +107,20 @@ public class FileUploadService {
         uploadJob.cancelUploads();
     }
 
-    private boolean isSmartFile(long userId) {
-        return userSettingsService.isSmartFileFeatureEnabled(userId);
+    private boolean isSmartFile(long userId, String method, Object body) {
+        return (FileUploadUtils.isCaptionSupported(method, body)
+                || FileUploadUtils.isFileNameSupported(method, body)
+                || FileUploadUtils.isThumbSupported(method, body))
+                && userSettingsService.isSmartFileFeatureEnabled(userId);
     }
 
     private void sendSmartFile(UploadQueueItem uploadQueueItem) {
         Locale locale = userService.getLocaleOrDefault(uploadQueueItem.getUserId());
-        InlineKeyboardMarkup smartKeyboard = smartKeyboardService.getSmartUploadKeyboard(uploadQueueItem.getId(), locale);
+        InlineKeyboardMarkup smartKeyboard = smartKeyboardService.getSmartUploadKeyboard(uploadQueueItem.getId(),
+                uploadQueueItem.getMethod(), uploadQueueItem.getBody(), locale);
         messageService.sendMessage(
                 SendMessage.builder().chatId(String.valueOf(uploadQueueItem.getUserId()))
-                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(locale))
+                        .text(smartUploadMessageBuilder.buildSmartUploadMessage(uploadQueueItem, locale))
                         .parseMode(ParseMode.HTML)
                         .replyMarkup(smartKeyboard)
                         .build()

@@ -1,5 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state;
 
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -15,11 +16,12 @@ import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInl
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartFileMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
+import ru.gadjini.telegram.smart.bot.commons.service.utils.SmartFileFeatureUtils;
 
 import java.util.Locale;
 
 @Component
-public class SmartFileCaptionState implements SmartFileState {
+public class SmartFileFileNameState implements SmartFileState {
 
     private MessageService messageService;
 
@@ -27,29 +29,38 @@ public class SmartFileCaptionState implements SmartFileState {
 
     private UserService userService;
 
+    private CommandNavigator commandNavigator;
+
+    private SmartStateNonCommandUpdateHandler nonCommandUpdateHandler;
+
     private SmartFileFatherState fatherState;
 
     private CommandStateService commandStateService;
 
     private UploadQueueService uploadQueueService;
 
-    private CommandNavigator commandNavigator;
-
-    private SmartStateNonCommandUpdateHandler nonCommandUpdateHandler;
-
     private SmartFileMessageBuilder messageBuilder;
 
     @Autowired
-    public SmartFileCaptionState(@TgMessageLimitsControl MessageService messageService,
-                                 SmartFileInlineKeyboardService smartFileInlineKeyboardService, UserService userService,
-                                 CommandStateService commandStateService, UploadQueueService uploadQueueService,
-                                 SmartFileMessageBuilder messageBuilder) {
+    public SmartFileFileNameState(@TgMessageLimitsControl MessageService messageService,
+                                  SmartFileInlineKeyboardService smartFileInlineKeyboardService,
+                                  CommandStateService commandStateService, UploadQueueService uploadQueueService,
+                                  SmartFileMessageBuilder messageBuilder) {
         this.messageService = messageService;
         this.smartFileInlineKeyboardService = smartFileInlineKeyboardService;
-        this.userService = userService;
         this.commandStateService = commandStateService;
         this.uploadQueueService = uploadQueueService;
         this.messageBuilder = messageBuilder;
+    }
+
+    @Autowired
+    public void setFatherState(SmartFileFatherState fatherState) {
+        this.fatherState = fatherState;
+    }
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     @Autowired
@@ -62,19 +73,14 @@ public class SmartFileCaptionState implements SmartFileState {
         this.commandNavigator = commandNavigator;
     }
 
-    @Autowired
-    public void setFatherState(SmartFileFatherState fatherState) {
-        this.fatherState = fatherState;
-    }
-
     @Override
     public SmartFileStateName getName() {
-        return SmartFileStateName.CAPTION;
+        return SmartFileStateName.FILENAME;
     }
 
     @Override
     public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        updateMessage(callbackQuery.getFrom().getId(), callbackQuery.getMessage().getMessageId(), currentState.getCaption());
+        updateMessage(callbackQuery.getFrom().getId(), callbackQuery.getMessage().getMessageId(), currentState.getFileName());
         commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
     }
 
@@ -88,21 +94,22 @@ public class SmartFileCaptionState implements SmartFileState {
 
     @Override
     public void update(Message message, String text, SmartFileCommandState currentState) {
-        uploadQueueService.updateCaption(currentState.getUploadId(), text);
-        currentState.setCaption(text);
+        String newFileName = SmartFileFeatureUtils.createNewFileName(text, FilenameUtils.getExtension(currentState.getFileName()));
+        uploadQueueService.updateFileName(currentState.getUploadId(), newFileName);
+        currentState.setFileName(newFileName);
         currentState.setStateName(SmartFileStateName.FATHER);
         fatherState.restore(message.getFrom().getId(), currentState);
         commandNavigator.silentPop(message.getFrom().getId());
         commandStateService.setState(message.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
     }
 
-    private void updateMessage(long userId, int messageId, String caption) {
+    private void updateMessage(long userId, int messageId, String fileName) {
         Locale locale = userService.getLocaleOrDefault(userId);
         messageService.editMessage(
                 EditMessageText.builder()
                         .chatId(String.valueOf(userId))
                         .messageId(messageId)
-                        .text(messageBuilder.buildCaptionMessage(caption, locale))
+                        .text(messageBuilder.buildFileNameMessage(fileName, locale))
                         .replyMarkup(smartFileInlineKeyboardService.goBackKeyboard(messageId, locale))
                         .build(),
                 false
