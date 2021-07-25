@@ -125,7 +125,7 @@ public class FileUploader {
 
     private void applySmartFileFeatures(UploadQueueItem queueItem) {
         if (StringUtils.isNotBlank(queueItem.getCustomCaption())
-                && SmartFileCaptionState.REMOVE_CAPTION.equals(queueItem.getCustomCaption())) {
+                && !SmartFileCaptionState.REMOVE_CAPTION.equals(queueItem.getCustomCaption())) {
             FileUploadUtils.setCaption(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomCaption());
         }
         if (StringUtils.isNotBlank(queueItem.getCustomFileName())) {
