@@ -13,6 +13,7 @@ import ru.gadjini.telegram.smart.bot.commons.model.UploadType;
 import ru.gadjini.telegram.smart.bot.commons.request.Arg;
 import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandParser;
+import ru.gadjini.telegram.smart.bot.commons.service.message.SmartWorkMessageProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
 
 import java.util.Locale;
@@ -36,6 +37,20 @@ public class SmartFileButtonFactory {
                         .add(CallbackDelegate.ARG_NAME, SmartWorkCommandNames.SMART_FILE_COMMAND)
                         .add(Arg.QUEUE_ITEM_ID.getKey(), uploadId)
                         .add(SmartFileArg.GO_BACK.getKey(), true)
+                        .serialize(CommandParser.COMMAND_ARG_SEPARATOR));
+
+        return inlineKeyboardButton;
+    }
+
+    public InlineKeyboardButton removeCaptionButton(int uploadId, Locale locale) {
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(
+                localisationService.getMessage(SmartWorkMessageProperties.REMOVE_CAPTION_COMMAND_DESCRIPTION, locale));
+        inlineKeyboardButton.setCallbackData(CommandNames.CALLBACK_DELEGATE_COMMAND_NAME + CommandParser.COMMAND_NAME_SEPARATOR +
+                new RequestParams()
+                        .add(CallbackDelegate.ARG_NAME, SmartWorkCommandNames.SMART_FILE_COMMAND)
+                        .add(Arg.QUEUE_ITEM_ID.getKey(), uploadId)
+                        .add(SmartFileArg.STATE.getKey(), SmartFileStateName.CAPTION.name())
+                        .add(SmartFileArg.REMOVE_CAPTION.getKey(), true)
                         .serialize(CommandParser.COMMAND_ARG_SEPARATOR));
 
         return inlineKeyboardButton;

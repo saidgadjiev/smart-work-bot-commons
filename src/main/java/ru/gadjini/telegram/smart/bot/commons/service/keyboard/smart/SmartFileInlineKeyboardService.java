@@ -26,6 +26,14 @@ public class SmartFileInlineKeyboardService {
         this.smartInlineKeyboardService = smartInlineKeyboardService;
     }
 
+    public InlineKeyboardMarkup captionKeyboard(int uploadId, Locale locale) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = smartInlineKeyboardService.inlineKeyboardMarkup();
+        inlineKeyboardMarkup.getKeyboard().add(List.of(smartButtonFactory.removeCaptionButton(uploadId, locale)));
+        inlineKeyboardMarkup.getKeyboard().add(List.of(smartButtonFactory.goBackButton(uploadId, locale)));
+
+        return inlineKeyboardMarkup;
+    }
+
     public InlineKeyboardMarkup goBackKeyboard(int uploadId, Locale locale) {
         InlineKeyboardMarkup inlineKeyboardMarkup = smartInlineKeyboardService.inlineKeyboardMarkup();
         inlineKeyboardMarkup.getKeyboard().add(List.of(smartButtonFactory.goBackButton(uploadId, locale)));

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCommandState;
+import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileCaptionState;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileMessageBodyDeserializer;
 import ru.gadjini.telegram.smart.bot.commons.common.MessagesProperties;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
@@ -43,7 +44,7 @@ public class SmartFileMessageBuilder {
 
     public String buildCaptionMessage(String caption, Locale locale) {
         String captionArg;
-        if (StringUtils.isBlank(caption)) {
+        if (StringUtils.isBlank(caption) || SmartFileCaptionState.REMOVE_CAPTION.equals(caption)) {
             return localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_NOT_DEFINED, locale);
         } else {
             captionArg = caption;
@@ -61,7 +62,7 @@ public class SmartFileMessageBuilder {
             thumbArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_THUMB_UNSUPPORTED, locale);
         } else {
             thumbArg = localisationService.getMessage(SmartWorkMessageProperties.VIEW_THUMB_COMMAND_NAME,
-                    new Object[]{uploadId}, locale);
+                    new Object[]{String.valueOf(uploadId)}, locale);
         }
 
         return localisationService.getMessage(
@@ -97,7 +98,7 @@ public class SmartFileMessageBuilder {
         }
         String captionArg;
         if (FileUploadUtils.isFileNameSupported(method, body)) {
-            if (StringUtils.isBlank(caption)) {
+            if (StringUtils.isBlank(caption) || SmartFileCaptionState.REMOVE_CAPTION.equals(caption)) {
                 captionArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_NOT_DEFINED, locale);
             } else {
                 captionArg = caption;

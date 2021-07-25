@@ -36,6 +36,8 @@ public class SmartFileFatherState implements SmartFileState {
 
     private SmartFileThumbState thumbState;
 
+    private SmartFileFileNameState fileNameState;
+
     private SmartFileMessageBodyDeserializer messageBodyDeserializer;
 
     @Autowired
@@ -48,6 +50,11 @@ public class SmartFileFatherState implements SmartFileState {
         this.smartFileInlineKeyboardService = smartFileInlineKeyboardService;
         this.smartUploadMessageBuilder = smartUploadMessageBuilder;
         this.messageBodyDeserializer = messageBodyDeserializer;
+    }
+
+    @Autowired
+    public void setFileNameState(SmartFileFileNameState fileNameState) {
+        this.fileNameState = fileNameState;
     }
 
     @Autowired
@@ -112,6 +119,9 @@ public class SmartFileFatherState implements SmartFileState {
         if (requestParams.contains(SmartFileArg.STATE.getKey())) {
             SmartFileStateName stateName = requestParams.get(SmartFileArg.STATE.getKey(), SmartFileStateName::valueOf);
             switch (stateName) {
+                case FILENAME:
+                    fileNameState.enter(callbackQuery, currentState);
+                    break;
                 case THUMB:
                     thumbState.enter(callbackQuery, currentState);
                     break;

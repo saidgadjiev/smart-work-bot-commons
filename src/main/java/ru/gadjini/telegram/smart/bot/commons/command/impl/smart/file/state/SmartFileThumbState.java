@@ -9,7 +9,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.gadjini.telegram.smart.bot.commons.annotation.TgMessageLimitsControl;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCommandState;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
+import ru.gadjini.telegram.smart.bot.commons.exception.UserException;
 import ru.gadjini.telegram.smart.bot.commons.model.MessageMedia;
+import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.MessageMediaService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
@@ -17,6 +19,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNa
 import ru.gadjini.telegram.smart.bot.commons.service.format.FormatCategory;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
+import ru.gadjini.telegram.smart.bot.commons.service.message.SmartWorkMessageProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartFileMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 
@@ -45,11 +48,14 @@ public class SmartFileThumbState implements SmartFileState {
 
     private SmartFileMessageBuilder messageBuilder;
 
+    private LocalisationService localisationService;
+
     @Autowired
     public SmartFileThumbState(@TgMessageLimitsControl MessageService messageService, UserService userService,
                                SmartFileInlineKeyboardService smartFileInlineKeyboardService,
                                CommandStateService commandStateService, UploadQueueService uploadQueueService,
-                               MessageMediaService messageMediaService, SmartFileMessageBuilder messageBuilder) {
+                               MessageMediaService messageMediaService, SmartFileMessageBuilder messageBuilder,
+                               LocalisationService localisationService) {
         this.messageService = messageService;
         this.userService = userService;
         this.smartFileInlineKeyboardService = smartFileInlineKeyboardService;
@@ -57,6 +63,7 @@ public class SmartFileThumbState implements SmartFileState {
         this.uploadQueueService = uploadQueueService;
         this.messageMediaService = messageMediaService;
         this.messageBuilder = messageBuilder;
+        this.localisationService = localisationService;
     }
 
     @Autowired
@@ -112,6 +119,8 @@ public class SmartFileThumbState implements SmartFileState {
             fatherState.restore(message.getFrom().getId(), currentState);
             commandNavigator.silentPop(message.getFrom().getId());
             commandStateService.setState(message.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
+        } else {
+            throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_SEND_THUMB, locale));
         }
     }
 }

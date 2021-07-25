@@ -9,11 +9,14 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.gadjini.telegram.smart.bot.commons.annotation.TgMessageLimitsControl;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.SmartFileCommandState;
 import ru.gadjini.telegram.smart.bot.commons.common.SmartWorkCommandNames;
+import ru.gadjini.telegram.smart.bot.commons.exception.UserException;
+import ru.gadjini.telegram.smart.bot.commons.service.LocalisationService;
 import ru.gadjini.telegram.smart.bot.commons.service.UserService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.CommandStateService;
 import ru.gadjini.telegram.smart.bot.commons.service.command.navigator.CommandNavigator;
 import ru.gadjini.telegram.smart.bot.commons.service.keyboard.smart.SmartFileInlineKeyboardService;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
+import ru.gadjini.telegram.smart.bot.commons.service.message.SmartWorkMessageProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.message.smart.SmartFileMessageBuilder;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.utils.SmartFileFeatureUtils;
@@ -22,6 +25,8 @@ import java.util.Locale;
 
 @Component
 public class SmartFileFileNameState implements SmartFileState {
+
+    private static final int MAX_LENGTH = 256;
 
     private MessageService messageService;
 
@@ -41,16 +46,19 @@ public class SmartFileFileNameState implements SmartFileState {
 
     private SmartFileMessageBuilder messageBuilder;
 
+    private LocalisationService localisationService;
+
     @Autowired
     public SmartFileFileNameState(@TgMessageLimitsControl MessageService messageService,
                                   SmartFileInlineKeyboardService smartFileInlineKeyboardService,
                                   CommandStateService commandStateService, UploadQueueService uploadQueueService,
-                                  SmartFileMessageBuilder messageBuilder) {
+                                  SmartFileMessageBuilder messageBuilder, LocalisationService localisationService) {
         this.messageService = messageService;
         this.smartFileInlineKeyboardService = smartFileInlineKeyboardService;
         this.commandStateService = commandStateService;
         this.uploadQueueService = uploadQueueService;
         this.messageBuilder = messageBuilder;
+        this.localisationService = localisationService;
     }
 
     @Autowired
@@ -94,6 +102,7 @@ public class SmartFileFileNameState implements SmartFileState {
 
     @Override
     public void update(Message message, String text, SmartFileCommandState currentState) {
+        validate(message, text);
         String newFileName = SmartFileFeatureUtils.createNewFileName(text, FilenameUtils.getExtension(currentState.getFileName()));
         uploadQueueService.updateFileName(currentState.getUploadId(), newFileName);
         currentState.setFileName(newFileName);
@@ -114,5 +123,17 @@ public class SmartFileFileNameState implements SmartFileState {
                         .build(),
                 false
         );
+    }
+
+    private void validate(Message message, String fileName) {
+        if (message.hasText()) {
+            if (fileName.length() > MAX_LENGTH) {
+                throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_FILENAME_MAX_LENGTH,
+                        new Object[]{MAX_LENGTH}, userService.getLocaleOrDefault(message.getFrom().getId())));
+            }
+        } else {
+            throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_SEND_FILENAME,
+                    userService.getLocaleOrDefault(message.getFrom().getId())));
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileCaptionState;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
@@ -123,7 +124,8 @@ public class FileUploader {
     }
 
     private void applySmartFileFeatures(UploadQueueItem queueItem) {
-        if (StringUtils.isNotBlank(queueItem.getCustomCaption())) {
+        if (StringUtils.isNotBlank(queueItem.getCustomCaption())
+                && SmartFileCaptionState.REMOVE_CAPTION.equals(queueItem.getCustomCaption())) {
             FileUploadUtils.setCaption(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomCaption());
         }
         if (StringUtils.isNotBlank(queueItem.getCustomFileName())) {
