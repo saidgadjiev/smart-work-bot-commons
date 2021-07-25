@@ -128,6 +128,9 @@ public class FileUploader {
                 && !SmartFileCaptionState.REMOVE_CAPTION.equals(queueItem.getCustomCaption())) {
             FileUploadUtils.setCaption(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomCaption());
         }
+        if (SmartFileCaptionState.REMOVE_CAPTION.equals(queueItem.getCustomCaption())) {
+            FileUploadUtils.setCaption(queueItem.getMethod(), queueItem.getBody(), null);
+        }
         if (StringUtils.isNotBlank(queueItem.getCustomFileName())) {
             FileUploadUtils.setFileName(queueItem.getMethod(), queueItem.getBody(), queueItem.getCustomFileName());
         }
