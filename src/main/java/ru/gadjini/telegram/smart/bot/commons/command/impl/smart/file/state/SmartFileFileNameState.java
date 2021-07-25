@@ -1,6 +1,7 @@
 package ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -102,7 +103,7 @@ public class SmartFileFileNameState implements SmartFileState {
 
     @Override
     public void update(Message message, String text, SmartFileCommandState currentState) {
-        validate(message, text);
+        text = validateAndGet(message, text);
         String newFileName = SmartFileFeatureUtils.createNewFileName(text, FilenameUtils.getExtension(currentState.getFileName()));
         uploadQueueService.updateFileName(currentState.getUploadId(), newFileName);
         currentState.setFileName(newFileName);
@@ -125,15 +126,31 @@ public class SmartFileFileNameState implements SmartFileState {
         );
     }
 
-    private void validate(Message message, String fileName) {
-        if (message.hasText()) {
+    private String validateAndGet(Message message, String fileName) {
+        fileName = getFixedFileName(fileName);
+
+        if (StringUtils.isNotBlank(fileName)) {
             if (fileName.length() > MAX_LENGTH) {
                 throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_FILENAME_MAX_LENGTH,
                         new Object[]{MAX_LENGTH}, userService.getLocaleOrDefault(message.getFrom().getId())));
             }
+
+            return fileName;
         } else {
             throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_SEND_FILENAME,
                     userService.getLocaleOrDefault(message.getFrom().getId())));
         }
+    }
+
+    private static String getFixedFileName(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return "";
+        }
+        return fileName
+                .replace("\"", "")
+                .replace("\\", "")
+                .replace("/", "")
+                .replace(";", "")
+                .replace(":", "");
     }
 }

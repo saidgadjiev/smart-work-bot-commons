@@ -1,5 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -135,7 +136,7 @@ public class SmartFileCaptionState implements SmartFileState {
     }
 
     private void validate(Message message, String caption) {
-        if (message.hasText()) {
+        if (StringUtils.isNotBlank(caption)) {
             if (caption.length() > MAX_LENGTH) {
                 throw new UserException(localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_MAX_LENGTH,
                         new Object[]{MAX_LENGTH}, userService.getLocaleOrDefault(message.getFrom().getId())));
