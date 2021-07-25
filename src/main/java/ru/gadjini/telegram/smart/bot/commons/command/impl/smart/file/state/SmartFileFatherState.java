@@ -84,6 +84,8 @@ public class SmartFileFatherState implements SmartFileState {
                 currentState.getMethod(),
                 messageBodyDeserializer.deserialize(currentState.getMethod(), currentState.getBody()), locale);
         messageService.editMessage(
+                callbackQuery.getMessage().getText(),
+                callbackQuery.getMessage().getReplyMarkup(),
                 EditMessageText.builder().chatId(String.valueOf(callbackQuery.getFrom().getId()))
                         .messageId(callbackQuery.getMessage().getMessageId())
                         .text(smartUploadMessageBuilder.buildSmartUploadMessage(currentState, locale))

@@ -19,10 +19,8 @@ import ru.gadjini.telegram.smart.bot.commons.service.message.MessageService;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.WorkQueueService;
 import ru.gadjini.telegram.smart.bot.commons.service.request.RequestParams;
 import ru.gadjini.telegram.smart.bot.commons.service.update.UpdateQueryStatusCommandMessageProvider;
-import ru.gadjini.telegram.smart.bot.commons.utils.TextUtils;
 
 import java.util.Locale;
-import java.util.Objects;
 
 @Component
 public class UpdateQueryStatusCommand implements CallbackBotCommand {
@@ -71,6 +69,8 @@ public class UpdateQueryStatusCommand implements CallbackBotCommand {
         QueueItem queueItem = queueService.getById(queryItemId);
         if (queueItem == null) {
             messageService.editMessage(
+                    callbackQuery.getMessage().getText(),
+                    callbackQuery.getMessage().getReplyMarkup(),
                     EditMessageText.builder().chatId(String.valueOf(callbackQuery.getMessage().getChatId()))
                             .messageId(callbackQuery.getMessage().getMessageId())
                             .text(localisationService.getMessage(MessagesProperties.MESSAGE_QUERY_ITEM_NOT_FOUND, locale))
@@ -83,15 +83,15 @@ public class UpdateQueryStatusCommand implements CallbackBotCommand {
                             .build());
         } else {
             String queuedMessage = messageProvider.getUpdateStatusMessage(queueItem, locale);
-            if (!Objects.equals(TextUtils.removeHtmlTags(queuedMessage), callbackQuery.getMessage().getText())) {
-                messageService.editMessage(
-                        EditMessageText.builder().chatId(String.valueOf(callbackQuery.getMessage().getChatId()))
-                                .messageId(callbackQuery.getMessage().getMessageId())
-                                .text(queuedMessage)
-                                .replyMarkup(inlineKeyboardService.getWaitingKeyboard(queryItemId, locale))
-                                .build()
-                );
-            }
+            messageService.editMessage(
+                    callbackQuery.getMessage().getText(),
+                    callbackQuery.getMessage().getReplyMarkup(),
+                    EditMessageText.builder().chatId(String.valueOf(callbackQuery.getMessage().getChatId()))
+                            .messageId(callbackQuery.getMessage().getMessageId())
+                            .text(queuedMessage)
+                            .replyMarkup(inlineKeyboardService.getWaitingKeyboard(queryItemId, locale))
+                            .build()
+            );
             messageService.sendAnswerCallbackQuery(
                     AnswerCallbackQuery.builder().callbackQueryId(callbackQuery.getId())
                             .cacheTime(CACHE_TIME_IN_SECONDS)

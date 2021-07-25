@@ -89,7 +89,7 @@ public class SmartFileFileNameState implements SmartFileState {
 
     @Override
     public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        updateMessage(callbackQuery.getFrom().getId(), callbackQuery.getMessage().getMessageId(), currentState.getFileName());
+        updateMessage(callbackQuery, currentState.getFileName());
         commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
     }
 
@@ -113,9 +113,13 @@ public class SmartFileFileNameState implements SmartFileState {
         commandStateService.setState(message.getFrom().getId(), SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
     }
 
-    private void updateMessage(long userId, int messageId, String fileName) {
+    private void updateMessage(CallbackQuery callbackQuery, String fileName) {
+        long userId = callbackQuery.getFrom().getId();
+        int messageId = callbackQuery.getMessage().getMessageId();
         Locale locale = userService.getLocaleOrDefault(userId);
         messageService.editMessage(
+                callbackQuery.getMessage().getText(),
+                callbackQuery.getMessage().getReplyMarkup(),
                 EditMessageText.builder()
                         .chatId(String.valueOf(userId))
                         .messageId(messageId)

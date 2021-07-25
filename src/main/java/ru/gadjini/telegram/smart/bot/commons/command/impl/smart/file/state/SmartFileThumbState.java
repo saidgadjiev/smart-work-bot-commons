@@ -90,6 +90,8 @@ public class SmartFileThumbState implements SmartFileState {
     public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
         Locale locale = userService.getLocaleOrDefault(callbackQuery.getFrom().getId());
         messageService.editMessage(
+                callbackQuery.getMessage().getText(),
+                callbackQuery.getMessage().getReplyMarkup(),
                 EditMessageText.builder()
                         .chatId(String.valueOf(callbackQuery.getFrom().getId()))
                         .messageId(callbackQuery.getMessage().getMessageId())

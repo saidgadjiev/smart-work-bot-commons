@@ -87,8 +87,7 @@ public class SmartFileCaptionState implements SmartFileState {
 
     @Override
     public void enter(CallbackQuery callbackQuery, SmartFileCommandState currentState) {
-        updateMessage(callbackQuery.getFrom().getId(), currentState.getUploadId(),
-                callbackQuery.getMessage().getMessageId(), currentState.getCaption());
+        updateMessage(callbackQuery, currentState.getUploadId(), currentState.getCaption());
         commandNavigator.push(callbackQuery.getFrom().getId(), nonCommandUpdateHandler);
     }
 
@@ -122,9 +121,13 @@ public class SmartFileCaptionState implements SmartFileState {
         commandStateService.setState(userId, SmartWorkCommandNames.SMART_FILE_COMMAND, currentState);
     }
 
-    private void updateMessage(long userId, int uploadId, int messageId, String caption) {
+    private void updateMessage(CallbackQuery callbackQuery, int uploadId, String caption) {
+        long userId = callbackQuery.getFrom().getId();
+        int messageId = callbackQuery.getMessage().getMessageId();
         Locale locale = userService.getLocaleOrDefault(userId);
         messageService.editMessage(
+                callbackQuery.getMessage().getText(),
+                callbackQuery.getMessage().getReplyMarkup(),
                 EditMessageText.builder()
                         .chatId(String.valueOf(userId))
                         .messageId(messageId)
