@@ -31,7 +31,7 @@ public class SmartFileMessageBuilder {
     public String buildFileNameMessage(String fileName, Locale locale) {
         String fileNameArg;
         if (StringUtils.isBlank(fileName)) {
-            fileNameArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_FILENAME_NOT_DEFINED, locale);
+            fileNameArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_NOT_DEFINED, locale);
         } else {
             fileNameArg = fileName;
         }
@@ -45,7 +45,7 @@ public class SmartFileMessageBuilder {
     public String buildCaptionMessage(String caption, Locale locale) {
         String captionArg;
         if (StringUtils.isBlank(caption) || SmartFileCaptionState.REMOVE_CAPTION.equals(caption)) {
-            captionArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_CAPTION_NOT_DEFINED, locale);
+            captionArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_NOT_DEFINED, locale);
         } else {
             captionArg = caption;
         }
@@ -59,7 +59,7 @@ public class SmartFileMessageBuilder {
     public String buildThumbMessage(int uploadId, String thumb, Locale locale) {
         String thumbArg;
         if (StringUtils.isBlank(thumb)) {
-            thumbArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_THUMB_UNSUPPORTED, locale);
+            thumbArg = localisationService.getMessage(SmartWorkMessageProperties.MESSAGE_NOT_DEFINED, locale);
         } else {
             thumbArg = localisationService.getMessage(SmartWorkMessageProperties.VIEW_THUMB_COMMAND_NAME,
                     new Object[]{String.valueOf(uploadId)}, locale);

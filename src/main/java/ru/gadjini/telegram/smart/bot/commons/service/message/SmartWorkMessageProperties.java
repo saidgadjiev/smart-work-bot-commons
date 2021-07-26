@@ -30,5 +30,7 @@ public class SmartWorkMessageProperties {
 
     public static final String MESSAGE_SEND_THUMB = "message.send.thumb";
 
+    public static final String MESSAGE_NOT_DEFINED = "message.not.defined";
+
     public static final String REMOVE_CAPTION_COMMAND_DESCRIPTION = "remove.caption.command.description";
 }
