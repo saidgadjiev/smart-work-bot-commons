@@ -32,5 +32,7 @@ public class SmartWorkMessageProperties {
 
     public static final String MESSAGE_NOT_DEFINED = "message.not.defined";
 
+    public static final String SMARTFILE_COMMAND_DESCRIPTION = "smartfile.command.description";
+
     public static final String REMOVE_CAPTION_COMMAND_DESCRIPTION = "remove.caption.command.description";
 }

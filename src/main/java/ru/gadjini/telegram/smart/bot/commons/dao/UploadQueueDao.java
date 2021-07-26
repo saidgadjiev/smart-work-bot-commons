@@ -1,7 +1,6 @@
 package ru.gadjini.telegram.smart.bot.commons.dao;
 
 import org.apache.commons.lang3.StringUtils;
-import org.postgresql.util.PGobject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -59,18 +58,15 @@ public class UploadQueueDao extends QueueDao {
                             "    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id", Statement.RETURN_GENERATED_KEYS);
                     ps.setLong(1, queueItem.getUserId());
                     ps.setString(2, queueItem.getMethod());
-                    PGobject pGobject = new PGobject();
-                    pGobject.setType("jsonb");
-                    pGobject.setValue(jackson.writeValueAsString(queueItem.getBody()));
-                    ps.setObject(3, pGobject);
+                    ps.setString(3, jackson.writeValueAsString(queueItem.getBody()));
                     ps.setString(4, queueItem.getProducerTable());
                     ps.setString(5, jackson.writeValueAsString(queueItem.getProgress()));
                     ps.setInt(6, queueItem.getStatus().getCode());
                     ps.setInt(7, queueItem.getProducerId());
                     if (queueItem.getExtra() != null) {
-                        ps.setObject(8, jackson.writeValueAsString(queueItem.getExtra()));
+                        ps.setString(8, jackson.writeValueAsString(queueItem.getExtra()));
                     } else {
-                        ps.setNull(8, Types.OTHER);
+                        ps.setNull(8, Types.VARCHAR);
                     }
                     ps.setLong(9, queueItem.getFileSize());
                     ps.setString(10, queueItem.getProducer());
