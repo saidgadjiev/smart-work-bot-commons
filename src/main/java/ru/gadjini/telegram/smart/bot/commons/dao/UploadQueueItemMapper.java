@@ -38,6 +38,8 @@ public class UploadQueueItemMapper {
 
         item.setUserId(rs.getInt(UploadQueueItem.USER_ID));
         item.setProducerTable(rs.getString(UploadQueueItem.PRODUCER_TABLE));
+        item.setProducer(rs.getString(UploadQueueItem.PRODUCER));
+        item.setFileSize(rs.getLong(UploadQueueItem.FILE_SIZE));
         item.setProducerId(rs.getInt(UploadQueueItem.PRODUCER_ID));
         item.setMethod(rs.getString(UploadQueueItem.METHOD));
         item.setBody(deserializeBody(item.getMethod(), rs.getString(UploadQueueItem.BODY)));
