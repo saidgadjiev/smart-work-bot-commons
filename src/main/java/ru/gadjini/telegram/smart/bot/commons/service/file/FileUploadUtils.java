@@ -17,6 +17,7 @@ public class FileUploadUtils {
             case SendVoice.PATH:
             case SendVideo.PATH:
             case SendAudio.PATH:
+            case SendPhoto.PATH:
             case SendDocument.PATH: {
                 return true;
             }
@@ -36,6 +37,7 @@ public class FileUploadUtils {
             case SendVoice.PATH:
             case SendVideo.PATH:
             case SendAudio.PATH:
+            case SendPhoto.PATH:
             case SendDocument.PATH: {
                 return true;
             }
@@ -69,6 +71,11 @@ public class FileUploadUtils {
                 caption = sendDocument.getCaption();
                 break;
             }
+            case SendPhoto.PATH: {
+                SendPhoto sendPhoto = (SendPhoto) body;
+                caption = sendPhoto.getCaption();
+                break;
+            }
             case SendAudio.PATH: {
                 SendAudio sendAudio = (SendAudio) body;
                 caption = sendAudio.getCaption();
@@ -96,6 +103,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 fileName = sendDocument.getDocument().getMediaName();
+                break;
+            }
+            case SendPhoto.PATH: {
+                SendPhoto sendPhoto = (SendPhoto) body;
+                fileName = sendPhoto.getPhoto().getMediaName();
                 break;
             }
             case SendAudio.PATH: {
@@ -163,6 +175,11 @@ public class FileUploadUtils {
                 sendDocument.getDocument().setMedia(sendDocument.getDocument().getNewMediaFile(), fileName);
                 break;
             }
+            case SendPhoto.PATH: {
+                SendPhoto sendPhoto = (SendPhoto) body;
+                sendPhoto.getPhoto().setMedia(sendPhoto.getPhoto().getNewMediaFile(), fileName);
+                break;
+            }
             case SendAudio.PATH: {
                 SendAudio sendAudio = (SendAudio) body;
                 sendAudio.getAudio().setMedia(sendAudio.getAudio().getNewMediaFile(), fileName);
@@ -196,6 +213,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 sendDocument.setCaption(caption);
+                break;
+            }
+            case SendPhoto.PATH: {
+                SendPhoto sendPhoto = (SendPhoto) body;
+                sendPhoto.setCaption(caption);
                 break;
             }
             case SendAudio.PATH: {
@@ -247,6 +269,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 inputFile = sendDocument.getDocument();
+                break;
+            }
+            case SendPhoto.PATH: {
+                SendPhoto sendDocument = (SendPhoto) body;
+                inputFile = sendDocument.getPhoto();
                 break;
             }
             case SendAudio.PATH: {

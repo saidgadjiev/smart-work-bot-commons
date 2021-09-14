@@ -114,6 +114,10 @@ public class FileUploader {
                 SendSticker sendSticker = (SendSticker) body;
                 return mediaMessageService.sendSticker(sendSticker, progress);
             }
+            case SendPhoto.PATH: {
+                SendPhoto sendPhoto = (SendPhoto) body;
+                return mediaMessageService.sendPhoto(sendPhoto);
+            }
             case SendVideoNote.PATH: {
                 SendVideoNote sendVideoNote = (SendVideoNote) body;
                 return mediaMessageService.sendVideoNote(sendVideoNote, progress);

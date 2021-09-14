@@ -30,6 +30,8 @@ public class SmartFileMessageBodyDeserializer {
                     return jackson.convertValue(body, SendVoice.class);
                 case SendSticker.PATH:
                     return jackson.convertValue(body, SendSticker.class);
+                case SendPhoto.PATH:
+                    return jackson.convertValue(body, SendPhoto.class);
                 case SendVideoNote.PATH:
                     return jackson.convertValue(body, SendVideoNote.class);
             }
