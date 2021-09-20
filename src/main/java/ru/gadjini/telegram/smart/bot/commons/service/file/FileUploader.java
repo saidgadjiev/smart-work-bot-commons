@@ -2,10 +2,11 @@ package ru.gadjini.telegram.smart.bot.commons.service.file;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import ru.gadjini.telegram.smart.bot.commons.annotation.TelegramMediaLimitsControl;
+import ru.gadjini.telegram.smart.bot.commons.annotation.botapi.TelegramBotApiBalancer;
 import ru.gadjini.telegram.smart.bot.commons.command.impl.smart.file.state.SmartFileCaptionState;
 import ru.gadjini.telegram.smart.bot.commons.domain.TgFile;
 import ru.gadjini.telegram.smart.bot.commons.domain.UploadQueueItem;
@@ -16,7 +17,7 @@ import ru.gadjini.telegram.smart.bot.commons.service.file.temp.FileTarget;
 import ru.gadjini.telegram.smart.bot.commons.service.file.temp.TempFileService;
 import ru.gadjini.telegram.smart.bot.commons.service.flood.UploadFloodWaitController;
 import ru.gadjini.telegram.smart.bot.commons.service.message.MediaMessageService;
-import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
+import ru.gadjini.telegram.smart.bot.commons.service.telegram.TelegramMediaService;
 
 import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getFilePath;
 import static ru.gadjini.telegram.smart.bot.commons.service.file.FileUploadUtils.getInputFile;
@@ -26,7 +27,7 @@ public class FileUploader {
 
     private static final String TAG = "updthmb";
 
-    private CancelableTelegramBotApiMediaService telegramBotApiService;
+    private TelegramMediaService telegramMediaService;
 
     private MediaMessageService mediaMessageService;
 
@@ -37,11 +38,11 @@ public class FileUploader {
     private TempFileService tempFileService;
 
     @Autowired
-    public FileUploader(CancelableTelegramBotApiMediaService telegramBotApiService,
-                        @Qualifier("mediaLimits") MediaMessageService mediaMessageService,
+    public FileUploader(@TelegramBotApiBalancer TelegramMediaService telegramMediaService,
+                        @TelegramMediaLimitsControl MediaMessageService mediaMessageService,
                         UploadFloodWaitController uploadFloodWaitController, FileDownloader fileDownloader,
                         TempFileService tempFileService) {
-        this.telegramBotApiService = telegramBotApiService;
+        this.telegramMediaService = telegramMediaService;
         this.mediaMessageService = mediaMessageService;
         this.uploadFloodWaitController = uploadFloodWaitController;
         this.fileDownloader = fileDownloader;
@@ -78,7 +79,7 @@ public class FileUploader {
         String filePath = getFilePath(method, body);
 
         if (StringUtils.isNotBlank(filePath)) {
-            telegramBotApiService.cancelUploading(filePath);
+            telegramMediaService.cancelUploading(filePath);
         }
     }
 

@@ -5,11 +5,12 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.NoHttpResponseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.gadjini.telegram.smart.bot.commons.annotation.botapi.TelegramBotApiBalancer;
 import ru.gadjini.telegram.smart.bot.commons.exception.botapi.TelegramApiRequestException;
 import ru.gadjini.telegram.smart.bot.commons.io.SmartTempFile;
 import ru.gadjini.telegram.smart.bot.commons.model.Progress;
 import ru.gadjini.telegram.smart.bot.commons.service.flood.DownloadFloodWaitController;
-import ru.gadjini.telegram.smart.bot.commons.service.telegram.CancelableTelegramBotApiMediaService;
+import ru.gadjini.telegram.smart.bot.commons.service.telegram.TelegramMediaService;
 
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -21,30 +22,19 @@ public class FileDownloader {
 
     public static final String FILE_ID_TEMPORARILY_UNAVAILABLE = "Bad Request: wrong file_id or the file is temporarily unavailable";
 
-    private CancelableTelegramBotApiMediaService telegramLocalBotApiService;
+    private TelegramMediaService telegramLocalBotApiService;
 
     private DownloadFloodWaitController floodWaitController;
 
     @Autowired
-    public FileDownloader(CancelableTelegramBotApiMediaService telegramLocalBotApiService, DownloadFloodWaitController floodWaitController) {
+    public FileDownloader(@TelegramBotApiBalancer TelegramMediaService telegramLocalBotApiService,
+                          DownloadFloodWaitController floodWaitController) {
         this.telegramLocalBotApiService = telegramLocalBotApiService;
         this.floodWaitController = floodWaitController;
     }
 
-    public String downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile) {
-        return downloadFileByFileId(fileId, fileSize, null, outputFile, true);
-    }
-
     public String downloadFileByFileId(String fileId, long fileSize, SmartTempFile outputFile, boolean withFloodControl) {
         return downloadFileByFileId(fileId, fileSize, null, outputFile, withFloodControl);
-    }
-
-    public String downloadFileByFileId(String fileId, long fileSize) {
-        return downloadFileByFileId(fileId, fileSize, null, null, true);
-    }
-
-    public String downloadFileByFileId(String fileId, long fileSize, boolean withFloodControl) {
-        return downloadFileByFileId(fileId, fileSize, null, null, withFloodControl);
     }
 
     public String downloadFileByFileId(String fileId, long fileSize, Progress progress, SmartTempFile outputFile, boolean withFloodControl) {
