@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
+import ru.gadjini.telegram.smart.bot.commons.annotation.botapi.DownloadRequestConfig;
 import ru.gadjini.telegram.smart.bot.commons.annotation.botapi.LocalBotApi;
 import ru.gadjini.telegram.smart.bot.commons.annotation.botapi.TelegramBotApi;
 import ru.gadjini.telegram.smart.bot.commons.property.BotApiProperties;
@@ -35,7 +36,7 @@ public class SmartWorkBotConfiguration {
                                                                 BotApiProperties botApiProperties,
                                                                 TelegramBotApiMethodExecutor exceptionHandler,
                                                                 TempFileService tempFileService,
-                                                                @Qualifier("downloadRequestConfig") RequestConfig downloadRequestConfig) {
+                                                                @DownloadRequestConfig RequestConfig downloadRequestConfig) {
         return new CancelableTelegramBotApiMediaService(botProperties, jackson, options, botApiProperties,
                 tempFileService, exceptionHandler, downloadRequestConfig);
     }
@@ -47,7 +48,7 @@ public class SmartWorkBotConfiguration {
                                                            @TelegramBotApi DefaultBotOptions options, BotApiProperties botApiProperties,
                                                            TelegramBotApiMethodExecutor exceptionHandler,
                                                            TempFileService tempFileService,
-                                                           @Qualifier("downloadRequestConfig") RequestConfig downloadRequestConfig) {
+                                                           @DownloadRequestConfig RequestConfig downloadRequestConfig) {
         return new CancelableTelegramBotApiMediaService(botProperties, jackson, options, botApiProperties,
                 tempFileService, exceptionHandler, downloadRequestConfig);
     }
