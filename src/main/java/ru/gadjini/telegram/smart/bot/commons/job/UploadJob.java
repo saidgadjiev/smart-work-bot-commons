@@ -16,6 +16,7 @@ import ru.gadjini.telegram.smart.bot.commons.exception.InvalidMediaMessageExcept
 import ru.gadjini.telegram.smart.bot.commons.model.SendFileResult;
 import ru.gadjini.telegram.smart.bot.commons.property.DownloadUploadFileLimitProperties;
 import ru.gadjini.telegram.smart.bot.commons.property.FileManagerProperties;
+import ru.gadjini.telegram.smart.bot.commons.property.UploadProperties;
 import ru.gadjini.telegram.smart.bot.commons.service.concurrent.SmartExecutorService;
 import ru.gadjini.telegram.smart.bot.commons.service.file.FileUploader;
 import ru.gadjini.telegram.smart.bot.commons.service.queue.UploadQueueService;
@@ -50,6 +51,8 @@ public class UploadJob extends WorkQueueJobPusher {
 
     private ApplicationEventPublisher applicationEventPublisher;
 
+    private UploadProperties uploadProperties;
+
     private final List<UploadQueueItem> currentUploads = new ArrayList<>();
 
     @Autowired
@@ -57,7 +60,7 @@ public class UploadJob extends WorkQueueJobPusher {
                      FileManagerProperties fileManagerProperties,
                      DownloadUploadFileLimitProperties mediaLimitProperties, WorkQueueDao workQueueDao,
                      ApplicationEventPublisher applicationEventPublisher,
-                     FileUploader fileUploader) {
+                     FileUploader fileUploader, UploadProperties uploadProperties) {
         super(true);
         this.uploadQueueService = uploadQueueService;
         this.fileManagerProperties = fileManagerProperties;
@@ -65,6 +68,9 @@ public class UploadJob extends WorkQueueJobPusher {
         this.workQueueDao = workQueueDao;
         this.applicationEventPublisher = applicationEventPublisher;
         this.fileUploader = fileUploader;
+        this.uploadProperties = uploadProperties;
+
+        LOGGER.debug("Discard upload({})", uploadProperties.isDiscard());
     }
 
     @Autowired
@@ -172,16 +178,21 @@ public class UploadJob extends WorkQueueJobPusher {
             currentUploads.add(uploadQueueItem);
             try {
                 updateProgress();
-                SendFileResult sendFileResult = null;
-                try {
-                    sendFileResult = fileUploader.upload(uploadQueueItem, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
-                } catch (InvalidMediaMessageException ignore) {
 
+                SendFileResult sendFileResult = null;
+                if (!uploadProperties.isDiscard()) {
+                    try {
+                        sendFileResult = fileUploader.upload(uploadQueueItem, getWeight().equals(SmartExecutorService.JobWeight.HEAVY));
+                    } catch (InvalidMediaMessageException ignore) {
+
+                    }
                 }
                 uploadQueueService.setCompleted(uploadQueueItem.getId());
                 uploadQueueService.releaseResources(uploadQueueItem);
 
-                applicationEventPublisher.publishEvent(new UploadCompleted(sendFileResult, uploadQueueItem));
+                if (!uploadProperties.isDiscard()) {
+                    applicationEventPublisher.publishEvent(new UploadCompleted(sendFileResult, uploadQueueItem));
+                }
             } catch (Throwable e) {
                 if (checker == null || !checker.get()) {
                     if (e instanceof FloodControlException) {
