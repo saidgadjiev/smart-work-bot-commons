@@ -264,7 +264,7 @@ public class UploadJob extends WorkQueueJobPusher {
         }
 
         private void noneCriticalException(UploadQueueItem uploadQueueItem, Throwable e) {
-            uploadQueueService.setWaitingAndDecrementAttempts(uploadQueueItem.getId(), fileManagerProperties.getSleepTimeBeforeUploadAttempt(), e);
+            uploadQueueService.setWaiting(uploadQueueItem.getId(), fileManagerProperties.getSleepTimeBeforeUploadAttempt(), e);
         }
 
         private void floodControlException(UploadQueueItem uploadQueueItem, FloodControlException e) {
