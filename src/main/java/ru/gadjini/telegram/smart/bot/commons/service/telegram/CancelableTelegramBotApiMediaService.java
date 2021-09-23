@@ -99,7 +99,7 @@ public class CancelableTelegramBotApiMediaService extends TelegramBotApiMediaSer
                     if (downloadingRequest.isAborted()) {
                         throw new DownloadCanceledException("Download canceled " + fileId);
                     }
-                    if (isLocal()) {
+                    if (!isLocal()) {
                         filePath = getLocalFilePath(file.getFilePath());
 
                         if (outputFile != null) {
