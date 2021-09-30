@@ -108,6 +108,8 @@ public class UploadQueueItemMapper {
         switch (method) {
             case SendDocument.PATH:
                 return jackson.readValue(body, SendDocument.class);
+            case SendAnimation.PATH:
+                return jackson.readValue(body, SendAnimation.class);
             case SendAudio.PATH:
                 return jackson.readValue(body, SendAudio.class);
             case SendVideo.PATH:

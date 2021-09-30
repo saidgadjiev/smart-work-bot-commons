@@ -18,6 +18,7 @@ public class FileUploadUtils {
             case SendVideo.PATH:
             case SendAudio.PATH:
             case SendPhoto.PATH:
+            case SendAnimation.PATH:
             case SendDocument.PATH: {
                 return true;
             }
@@ -38,6 +39,7 @@ public class FileUploadUtils {
             case SendVideo.PATH:
             case SendAudio.PATH:
             case SendPhoto.PATH:
+            case SendAnimation.PATH:
             case SendDocument.PATH: {
                 return true;
             }
@@ -56,6 +58,7 @@ public class FileUploadUtils {
             case SendVideo.PATH:
             case SendAudio.PATH:
             case SendDocument.PATH:
+            case SendAnimation.PATH:
                 return true;
             default:
                 return false;
@@ -69,6 +72,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 caption = sendDocument.getCaption();
+                break;
+            }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                caption = sendAnimation.getCaption();
                 break;
             }
             case SendPhoto.PATH: {
@@ -103,6 +111,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 fileName = sendDocument.getDocument().getMediaName();
+                break;
+            }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                fileName = sendAnimation.getAnimation().getMediaName();
                 break;
             }
             case SendPhoto.PATH: {
@@ -148,6 +161,11 @@ public class FileUploadUtils {
                 thumb = sendDocument.getThumb();
                 break;
             }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                thumb = sendAnimation.getThumb();
+                break;
+            }
             case SendAudio.PATH: {
                 SendAudio sendAudio = (SendAudio) body;
                 thumb = sendAudio.getThumb();
@@ -173,6 +191,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 sendDocument.getDocument().setMedia(sendDocument.getDocument().getNewMediaFile(), fileName);
+                break;
+            }
+            case SendAnimation.PATH: {
+                SendAnimation sendDocument = (SendAnimation) body;
+                sendDocument.getAnimation().setMedia(sendDocument.getAnimation().getNewMediaFile(), fileName);
                 break;
             }
             case SendPhoto.PATH: {
@@ -215,6 +238,11 @@ public class FileUploadUtils {
                 sendDocument.setCaption(caption);
                 break;
             }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                sendAnimation.setCaption(caption);
+                break;
+            }
             case SendPhoto.PATH: {
                 SendPhoto sendPhoto = (SendPhoto) body;
                 sendPhoto.setCaption(caption);
@@ -245,6 +273,11 @@ public class FileUploadUtils {
                 sendDocument.setThumb(thumb);
                 break;
             }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                sendAnimation.setThumb(thumb);
+                break;
+            }
             case SendAudio.PATH: {
                 SendAudio sendAudio = (SendAudio) body;
                 sendAudio.setThumb(thumb);
@@ -269,6 +302,11 @@ public class FileUploadUtils {
             case SendDocument.PATH: {
                 SendDocument sendDocument = (SendDocument) body;
                 inputFile = sendDocument.getDocument();
+                break;
+            }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                inputFile = sendAnimation.getAnimation();
                 break;
             }
             case SendPhoto.PATH: {

@@ -22,6 +22,8 @@ public class SmartFileMessageBodyDeserializer {
             switch (method) {
                 case SendDocument.PATH:
                     return jackson.convertValue(body, SendDocument.class);
+                case SendAnimation.PATH:
+                    return jackson.convertValue(body, SendAnimation.class);
                 case SendAudio.PATH:
                     return jackson.convertValue(body, SendAudio.class);
                 case SendVideo.PATH:

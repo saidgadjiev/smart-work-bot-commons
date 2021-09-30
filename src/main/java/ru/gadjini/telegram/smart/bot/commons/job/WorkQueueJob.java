@@ -259,7 +259,7 @@ public class WorkQueueJob extends WorkQueueJobPusher {
                     .chatId(String.valueOf(chatId))
                     .messageId(messageId)
                     .text(localisationService.getMessage(MessagesProperties.MESSAGE_QUERY_CANCELED, userService.getLocaleOrDefault((int) chatId)))
-                    .build(), false);
+                    .build());
         }
     }
 

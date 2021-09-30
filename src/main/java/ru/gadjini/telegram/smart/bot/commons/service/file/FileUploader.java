@@ -99,6 +99,10 @@ public class FileUploader {
                 SendDocument sendDocument = (SendDocument) body;
                 return mediaMessageService.sendDocument(sendDocument, progress);
             }
+            case SendAnimation.PATH: {
+                SendAnimation sendAnimation = (SendAnimation) body;
+                return mediaMessageService.sendAnimation(sendAnimation, progress);
+            }
             case SendAudio.PATH: {
                 SendAudio sendAudio = (SendAudio) body;
                 return mediaMessageService.sendAudio(sendAudio, progress);
