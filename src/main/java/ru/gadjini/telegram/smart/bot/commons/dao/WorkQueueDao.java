@@ -88,7 +88,7 @@ public class WorkQueueDao extends QueueDao {
     private QueueItem map(ResultSet rs) throws SQLException {
         QueueItem queueItem = new QueueItem();
         queueItem.setId(rs.getInt(QueueItem.ID));
-        queueItem.setUserId(rs.getInt(QueueItem.USER_ID));
+        queueItem.setUserId(rs.getLong(QueueItem.USER_ID));
 
         return queueItem;
     }

@@ -36,7 +36,7 @@ public class UploadQueueItemMapper {
         UploadQueueItem item = new UploadQueueItem();
         item.setId(rs.getInt(UploadQueueItem.ID));
 
-        item.setUserId(rs.getInt(UploadQueueItem.USER_ID));
+        item.setUserId(rs.getLong(UploadQueueItem.USER_ID));
         item.setProducerTable(rs.getString(UploadQueueItem.PRODUCER_TABLE));
         item.setProducer(rs.getString(UploadQueueItem.PRODUCER));
         item.setFileSize(rs.getLong(UploadQueueItem.FILE_SIZE));

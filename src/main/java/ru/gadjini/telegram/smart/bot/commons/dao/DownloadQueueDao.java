@@ -241,7 +241,7 @@ public class DownloadQueueDao extends QueueDao {
         }
         item.setFile(tgFile);
 
-        item.setUserId(rs.getInt(DownloadQueueItem.USER_ID));
+        item.setUserId(rs.getLong(DownloadQueueItem.USER_ID));
         item.setProducerTable(rs.getString(DownloadQueueItem.PRODUCER_TABLE));
         item.setProducerId(rs.getInt(DownloadQueueItem.PRODUCER_ID));
         item.setFilePath(rs.getString(DownloadQueueItem.FILE_PATH));

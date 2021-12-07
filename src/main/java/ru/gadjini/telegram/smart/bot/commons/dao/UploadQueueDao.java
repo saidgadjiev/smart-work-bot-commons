@@ -216,7 +216,7 @@ public class UploadQueueDao extends QueueDao {
                         UploadQueueItem queueItem = new UploadQueueItem();
                         queueItem.setUploadType(UploadType.valueOf(rs.getString(UploadQueueItem.UPLOAD_TYPE)));
                         queueItem.setId(rs.getInt(UploadQueueItem.ID));
-                        queueItem.setUserId(rs.getInt(UploadQueueItem.USER_ID));
+                        queueItem.setUserId(rs.getLong(UploadQueueItem.USER_ID));
                         String fileFormat = rs.getString(UploadQueueItem.FILE_FORMAT);
                         if (StringUtils.isNotBlank(fileFormat)) {
                             queueItem.setFileFormat(Format.valueOf(fileFormat));
