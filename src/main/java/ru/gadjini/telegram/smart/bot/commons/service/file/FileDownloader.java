@@ -60,9 +60,19 @@ public class FileDownloader {
         int socketException = ExceptionUtils.indexOfThrowable(ex, SocketException.class);
         int socketTimeOutException = ExceptionUtils.indexOfThrowable(ex, SocketTimeoutException.class);
         int noSuchFileException = ExceptionUtils.indexOfThrowable(ex, NoSuchFileException.class);
+        int telegramApiRequestExceptionIndex = ExceptionUtils.indexOfThrowable(ex, TelegramApiRequestException.class);
         boolean restart500 = false;
         if (StringUtils.isNotBlank(ex.getMessage())) {
             restart500 = ex.getMessage().contains("Internal Server Error: restart");
+        }
+
+        if (telegramApiRequestExceptionIndex != -1) {
+            TelegramApiRequestException telegramApiRequestException = (TelegramApiRequestException)
+                    ExceptionUtils.getThrowableList(ex).get(telegramApiRequestExceptionIndex);
+
+            if (Objects.equals(telegramApiRequestException.getErrorCode(), 504)) {
+                return true;
+            }
         }
 
         return indexOfNoResponseException != -1 || socketException != -1
